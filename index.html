@@ -335,6 +335,8 @@
         // Variables globales
         let isScanning = false;
         let videoStream = null;
+        let lastScannedId = null;
+        let scanCooldown = false;
         
         // Inicializar
         function init() {
@@ -556,6 +558,8 @@
             startScanBtn.classList.add('hidden');
             stopScanBtn.classList.remove('hidden');
             scanResult.innerHTML = "";
+            lastScannedId = null;
+            scanCooldown = false;
             
             // Solicitar acceso a la cámara
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
@@ -585,7 +589,7 @@
             }
         }
         
-        // Escanear código QR
+        // Escanear código QR - CON PROTECCIÓN CONTRA MÚLTIPLES LECTURAS
         function scanQRCode() {
             if (!isScanning) return;
             
@@ -599,10 +603,23 @@
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
                 
-                if (code) {
+                if (code && !scanCooldown) {
                     try {
                         const workerData = JSON.parse(code.data);
-                        registerAttendance(workerData);
+                        
+                        // Evitar múltiples lecturas del mismo código
+                        if (lastScannedId !== workerData.id) {
+                            lastScannedId = workerData.id;
+                            scanCooldown = true;
+                            
+                            // Activar enfriamiento para evitar múltiples lecturas
+                            setTimeout(() => {
+                                scanCooldown = false;
+                                lastScannedId = null;
+                            }, 3000); // 3 segundos de enfriamiento
+                            
+                            registerAttendance(workerData);
+                        }
                     } catch (e) {
                         console.error("Error al procesar QR:", e);
                         showStatus(scanResult, 'Código QR inválido', 'error');
