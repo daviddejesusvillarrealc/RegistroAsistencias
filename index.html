@@ -84,6 +84,14 @@
             background-color: #c0392b;
         }
         
+        button.success {
+            background-color: #2ecc71;
+        }
+        
+        button.success:hover {
+            background-color: #27ae60;
+        }
+        
         #qrcode {
             margin: 20px 0;
             display: flex;
@@ -91,6 +99,8 @@
             min-height: 220px;
             border: 1px dashed #ddd;
             padding: 10px;
+            flex-direction: column;
+            align-items: center;
         }
         
         #scanner-container {
@@ -189,6 +199,25 @@
             color: #721c24;
         }
         
+        .qr-history {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .qr-history-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .qr-history-item img {
+            max-width: 100px;
+            height: auto;
+        }
+        
         .loading {
             display: inline-block;
             width: 20px;
@@ -226,6 +255,10 @@
                 max-width: 180px;
                 height: auto;
             }
+            
+            .qr-history {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -233,66 +266,70 @@
     <div class="container">
         <h1>Sistema de Registro de Asistencias</h1>
         
-        <div class="tab-container">
-            <div class="tab active" data-tab="register">Registrar</div>
-            <div class="tab" data-tab="attendance">Asistencia</div>
-            <div class="tab" data-tab="admin">Admin</div>
+        <!-- Sección de login general -->
+        <div class="section login-section" id="mainLoginSection">
+            <h2>Acceso al Sistema</h2>
+            <input type="password" id="mainPassword" placeholder="Contraseña de acceso">
+            <button id="mainLoginBtn">Iniciar sesión</button>
+            <div id="mainLoginStatus"></div>
         </div>
         
-        <!-- Sección de login para administrador -->
-        <div class="tab-content active" id="registerTab">
-            <div class="section">
-                <h2>Registrar Nuevo Trabajador</h2>
-                <input type="text" id="workerName" placeholder="Nombre del trabajador">
-                <input type="text" id="workerId" placeholder="ID del trabajador">
-                <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
-                <button id="generateQRBtn">Generar código QR</button>
-                <div id="qrcode">El código QR aparecerá aquí</div>
-                <div id="registerStatus"></div>
-            </div>
-        </div>
-        
-        <!-- Sección para escanear QR -->
-        <div class="tab-content" id="attendanceTab">
-            <div class="section">
-                <h2>Registrar Asistencia</h2>
-                <button id="startScanBtn">Abrir cámara para escanear QR</button>
-                <div id="scanner-container">
-                    <video id="video" playsinline></video>
-                    <div id="scan-region"></div>
-                </div>
-                <button id="stopScanBtn" class="secondary hidden">Cerrar cámara</button>
-                <div id="scan-result"></div>
-            </div>
-        </div>
-        
-        <!-- Sección de administrador -->
-        <div class="tab-content" id="adminTab">
-            <!-- Sección de login para administrador -->
-            <div class="section login-section" id="adminLoginSection">
-                <h2>Acceso Administrador</h2>
-                <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
-                <button id="loginBtn">Iniciar sesión como administrador</button>
-                <div id="loginStatus"></div>
+        <!-- Contenido principal (oculto hasta login) -->
+        <div id="mainContent" class="hidden">
+            <div class="tab-container">
+                <div class="tab active" data-tab="register">Registrar</div>
+                <div class="tab" data-tab="attendance">Asistencia</div>
+                <div class="tab" data-tab="admin">Admin</div>
             </div>
             
-            <!-- Sección de administrador (solo visible después de login) -->
-            <div id="adminSection" class="admin-section hidden">
-                <h2>Panel de Administrador</h2>
-                
+            <!-- Sección para registrar trabajador -->
+            <div class="tab-content active" id="registerTab">
                 <div class="section">
-                    <h3>Gestión de Trabajadores</h3>
-                    <button id="refreshWorkersBtn">Actualizar lista</button>
-                    <div id="workerList" class="worker-list"></div>
+                    <h2>Registrar Nuevo Trabajador</h2>
+                    <input type="text" id="workerName" placeholder="Nombre del trabajador">
+                    <input type="text" id="workerId" placeholder="ID del trabajador">
+                    <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
+                    <button id="generateQRBtn">Generar código QR</button>
+                    <div id="qrcode">El código QR aparecerá aquí</div>
+                    <div id="registerStatus"></div>
+                    <div id="qrHistory" class="qr-history"></div>
                 </div>
-                
+            </div>
+            
+            <!-- Sección para escanear QR -->
+            <div class="tab-content" id="attendanceTab">
                 <div class="section">
-                    <h3>Registros de Asistencia</h3>
-                    <button id="refreshAttendanceBtn">Actualizar registros</button>
-                    <div id="attendanceRecords"></div>
+                    <h2>Registrar Asistencia</h2>
+                    <input type="password" id="attendancePassword" placeholder="Contraseña para registrar asistencia">
+                    <button id="startScanBtn">Abrir cámara para escanear QR</button>
+                    <div id="scanner-container">
+                        <video id="video" playsinline></video>
+                        <div id="scan-region"></div>
+                    </div>
+                    <button id="stopScanBtn" class="secondary hidden">Cerrar cámara</button>
+                    <div id="scan-result"></div>
                 </div>
-                
-                <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+            </div>
+            
+            <!-- Sección de administrador -->
+            <div class="tab-content" id="adminTab">
+                <div class="section">
+                    <h2>Panel de Administrador</h2>
+                    
+                    <div class="section">
+                        <h3>Gestión de Trabajadores</h3>
+                        <button id="refreshWorkersBtn">Actualizar lista</button>
+                        <div id="workerList" class="worker-list"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>Registros de Asistencia</h3>
+                        <button id="refreshAttendanceBtn">Actualizar registros</button>
+                        <div id="attendanceRecords"></div>
+                    </div>
+                    
+                    <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+                </div>
             </div>
         </div>
     </div>
@@ -300,14 +337,20 @@
     <script>
         // Configuración
         const ADMIN_PASSWORD = "admin123"; // Cambia esta contraseña en producción
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxX_bcvpu7iU5atU0Zlz7Rl9u9mKVdJa6-bbQe7AzSj09Zmt4qfrJyXr37EYIFwKyTuQw/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
         
-        // Almacenamiento local (como respaldo)
+        // Almacenamiento local
         let workers = JSON.parse(localStorage.getItem('workers')) || [];
         let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
-        let isAdminLoggedIn = false;
+        let qrHistory = JSON.parse(localStorage.getItem('qrHistory')) || [];
+        let isLoggedIn = false;
         
         // Elementos del DOM
+        const mainLoginSection = document.getElementById('mainLoginSection');
+        const mainContent = document.getElementById('mainContent');
+        const mainPassword = document.getElementById('mainPassword');
+        const mainLoginBtn = document.getElementById('mainLoginBtn');
+        const mainLoginStatus = document.getElementById('mainLoginStatus');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
         const workerName = document.getElementById('workerName');
@@ -316,16 +359,13 @@
         const generateQRBtn = document.getElementById('generateQRBtn');
         const qrcodeDiv = document.getElementById('qrcode');
         const registerStatus = document.getElementById('registerStatus');
+        const qrHistoryDiv = document.getElementById('qrHistory');
+        const attendancePassword = document.getElementById('attendancePassword');
         const startScanBtn = document.getElementById('startScanBtn');
         const stopScanBtn = document.getElementById('stopScanBtn');
         const scannerContainer = document.getElementById('scanner-container');
         const video = document.getElementById('video');
         const scanResult = document.getElementById('scan-result');
-        const adminLoginSection = document.getElementById('adminLoginSection');
-        const adminSection = document.getElementById('adminSection');
-        const adminPassword = document.getElementById('adminPassword');
-        const loginBtn = document.getElementById('loginBtn');
-        const loginStatus = document.getElementById('loginStatus');
         const logoutBtn = document.getElementById('logoutBtn');
         const workerList = document.getElementById('workerList');
         const attendanceRecordsDiv = document.getElementById('attendanceRecords');
@@ -335,16 +375,17 @@
         // Variables globales
         let isScanning = false;
         let videoStream = null;
-        let lastScannedId = null;
-        let scanCooldown = false;
         let scanAnimationFrame = null;
+        let scanCooldown = false;
         
         // Inicializar
         function init() {
             updateWorkerList();
             updateAttendanceRecords();
+            updateQRHistory();
             
-            // Event listeners para pestañas
+            // Event listeners
+            mainLoginBtn.addEventListener('click', mainLogin);
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const tabId = tab.getAttribute('data-tab');
@@ -352,18 +393,36 @@
                 });
             });
             
-            // Event listeners para botones
             generateQRBtn.addEventListener('click', generateQRCode);
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
-            loginBtn.addEventListener('click', adminLogin);
-            logoutBtn.addEventListener('click', adminLogout);
+            logoutBtn.addEventListener('click', logout);
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
             
-            // Cargar workers y registros desde Google Sheets al iniciar
+            // Cargar datos iniciales
             fetchWorkersFromGoogleSheets();
             fetchAttendanceFromGoogleSheets();
+        }
+        
+        // Login principal
+        function mainLogin() {
+            if (mainPassword.value === ADMIN_PASSWORD) {
+                isLoggedIn = true;
+                mainLoginSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                mainPassword.value = "";
+            } else {
+                showStatus(mainLoginStatus, 'Contraseña incorrecta', 'error');
+            }
+        }
+        
+        // Logout
+        function logout() {
+            isLoggedIn = false;
+            mainLoginSection.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+            stopScanner();
         }
         
         // Cambiar pestaña
@@ -384,20 +443,19 @@
                 }
             });
             
-            // Si se cambia a la pestaña de administrador y no está logeado, mostrar login
-            if (tabId === 'admin' && !isAdminLoggedIn) {
-                adminLoginSection.classList.remove('hidden');
-                adminSection.classList.add('hidden');
-            }
-            
-            // Si se cambia de pestaña, detener el escáner si está activo
+            // Detener el escáner si está activo
             if (isScanning) {
                 stopScanner();
             }
         }
         
-        // Generar código QR - VERSIÓN CORREGIDA
+        // Generar código QR
         function generateQRCode() {
+            if (!isLoggedIn) {
+                showStatus(registerStatus, 'Debe iniciar sesión primero', 'error');
+                return;
+            }
+            
             const name = workerName.value.trim();
             const id = workerId.value.trim();
             const position = workerPosition.value.trim();
@@ -412,7 +470,7 @@
             generateQRBtn.innerHTML = 'Generando...';
             
             // Limpiar QR anterior
-            qrcodeDiv.innerHTML = "";
+            qrcodeDiv.innerHTML = "Generando código QR...";
             
             // Crear datos para el QR
             const workerData = JSON.stringify({
@@ -423,11 +481,12 @@
             });
             
             try {
-                // SOLUCIÓN: Usar QRCode.toCanvas con un canvas existente
+                // Crear canvas para el QR
                 const canvas = document.createElement('canvas');
+                qrcodeDiv.innerHTML = "";
                 qrcodeDiv.appendChild(canvas);
                 
-                // Usar la API correcta de QRCode
+                // Generar QR
                 QRCode.toCanvas(canvas, workerData, {
                     width: 200,
                     margin: 1,
@@ -444,8 +503,11 @@
                         return;
                     }
                     
+                    // Guardar imagen del QR
+                    const qrImageData = canvas.toDataURL('image/png');
+                    
                     // Guardar trabajador en Google Sheets
-                    saveWorkerToGoogleSheets(name, id, position, workerData);
+                    saveWorkerToGoogleSheets(name, id, position, workerData, qrImageData);
                 });
                 
             } catch (error) {
@@ -457,13 +519,14 @@
         }
         
         // Guardar trabajador en Google Sheets
-        function saveWorkerToGoogleSheets(name, id, position, qrData) {
+        function saveWorkerToGoogleSheets(name, id, position, qrData, qrImageData) {
             const formData = new FormData();
             formData.append('action', 'register');
             formData.append('name', name);
             formData.append('id', id);
             formData.append('position', position);
             formData.append('qrData', qrData);
+            formData.append('qrImageData', qrImageData);
             formData.append('timestamp', new Date().toISOString());
             
             fetch(GOOGLE_SCRIPT_URL, {
@@ -479,11 +542,28 @@
                         id: id,
                         position: position,
                         qrData: qrData,
+                        qrImageData: qrImageData,
                         registeredAt: new Date().toISOString()
                     };
                     
                     workers.push(worker);
                     localStorage.setItem('workers', JSON.stringify(workers));
+                    
+                    // Guardar en historial de QR
+                    qrHistory.unshift({
+                        name: name,
+                        id: id,
+                        position: position,
+                        qrImageData: qrImageData,
+                        generatedAt: new Date().toISOString()
+                    });
+                    
+                    // Mantener solo los últimos 10 QR en el historial
+                    if (qrHistory.length > 10) {
+                        qrHistory = qrHistory.slice(0, 10);
+                    }
+                    
+                    localStorage.setItem('qrHistory', JSON.stringify(qrHistory));
                     
                     showStatus(registerStatus, 'Trabajador registrado correctamente. Código QR generado.', 'success');
                     
@@ -492,8 +572,9 @@
                     workerId.value = "";
                     workerPosition.value = "";
                     
-                    // Actualizar lista de trabajadores
+                    // Actualizar lista de trabajadores e historial
                     updateWorkerList();
+                    updateQRHistory();
                 } else {
                     showStatus(registerStatus, 'Error al guardar en Google Sheets: ' + data.message, 'error');
                 }
@@ -507,6 +588,45 @@
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = 'Generar código QR';
             });
+        }
+        
+        // Actualizar historial de QR
+        function updateQRHistory() {
+            qrHistoryDiv.innerHTML = "";
+            
+            if (qrHistory.length === 0) {
+                qrHistoryDiv.innerHTML = "<p>No hay códigos QR generados recientemente</p>";
+                return;
+            }
+            
+            qrHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'qr-history-item';
+                historyItem.innerHTML = `
+                    <img src="${item.qrImageData}" alt="QR de ${item.name}">
+                    <div><strong>${item.name}</strong></div>
+                    <div>${item.id}</div>
+                    <small>${new Date(item.generatedAt).toLocaleDateString('es-ES')}</small>
+                    <button class="success" data-index="${index}">Reutilizar</button>
+                `;
+                qrHistoryDiv.appendChild(historyItem);
+            });
+            
+            // Agregar event listeners a los botones de reutilizar
+            const reuseButtons = qrHistoryDiv.querySelectorAll('button');
+            reuseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    reuseQRCode(index);
+                });
+            });
+        }
+        
+        // Reutilizar código QR del historial
+        function reuseQRCode(index) {
+            const item = qrHistory[index];
+            qrcodeDiv.innerHTML = `<img src="${item.qrImageData}" alt="QR de ${item.name}">`;
+            showStatus(registerStatus, `Código QR de ${item.name} cargado desde el historial`, 'success');
         }
         
         // Obtener trabajadores desde Google Sheets
@@ -555,11 +675,20 @@
         
         // Iniciar escáner
         function startScanner() {
+            if (!isLoggedIn) {
+                showStatus(scanResult, 'Debe iniciar sesión primero', 'error');
+                return;
+            }
+            
+            if (attendancePassword.value !== ADMIN_PASSWORD) {
+                showStatus(scanResult, 'Contraseña incorrecta para registrar asistencia', 'error');
+                return;
+            }
+            
             scannerContainer.style.display = 'block';
             startScanBtn.classList.add('hidden');
             stopScanBtn.classList.remove('hidden');
             scanResult.innerHTML = "";
-            lastScannedId = null;
             scanCooldown = false;
             
             // Solicitar acceso a la cámara
@@ -596,7 +725,7 @@
             }
         }
         
-        // Escanear código QR - CON PROTECCIÓN CONTRA MÚLTIPLES LECTURAS MEJORADA
+        // Escanear código QR - CON PROTECCIÓN MEJORADA CONTRA MÚLTIPLES LECTURAS
         function scanQRCode() {
             if (!isScanning) return;
             
@@ -614,20 +743,23 @@
                     try {
                         const workerData = JSON.parse(code.data);
                         
-                        // Verificar si es un código nuevo (no el mismo que el anterior)
-                        if (lastScannedId !== workerData.id) {
-                            lastScannedId = workerData.id;
-                            scanCooldown = true;
-                            
-                            // Detener el escaneo inmediatamente después de detectar un código válido
-                            stopScanner();
-                            
-                            // Procesar el código
-                            registerAttendance(workerData);
-                        }
+                        // Activar enfriamiento para evitar múltiples lecturas
+                        scanCooldown = true;
+                        
+                        // Detener el escáner inmediatamente después de detectar un código válido
+                        stopScanner();
+                        
+                        // Procesar el código
+                        registerAttendance(workerData);
                     } catch (e) {
                         console.error("Error al procesar QR:", e);
                         showStatus(scanResult, 'Código QR inválido', 'error');
+                        
+                        // Reactivar el escáner después de un error
+                        setTimeout(() => {
+                            scanCooldown = false;
+                            startScanner();
+                        }, 2000);
                     }
                 }
             }
@@ -658,10 +790,10 @@
                 saveAttendanceToGoogleSheets(attendanceData);
             } else {
                 showStatus(scanResult, 'Trabajador no registrado', 'error');
+                
                 // Reactivar el escáner después de un error
                 setTimeout(() => {
                     scanCooldown = false;
-                    lastScannedId = null;
                     startScanner();
                 }, 2000);
             }
@@ -692,7 +824,7 @@
                     // Mostrar resultado
                     scanResult.innerHTML = `
                         <div class="status-message success">
-                            <p><strong>Asistencia registrada</strong></p>
+                            <p><strong>Asistencia registrada correctamente</strong></p>
                             <p>Nombre: ${attendanceData.name}</p>
                             <p>ID: ${attendanceData.id}</p>
                             <p>Cargo: ${attendanceData.position}</p>
@@ -702,35 +834,29 @@
                     
                     // Actualizar registros de asistencia
                     updateAttendanceRecords();
+                    
+                    // Limpiar contraseña
+                    attendancePassword.value = "";
                 } else {
                     showStatus(scanResult, 'Error al registrar asistencia: ' + data.message, 'error');
+                    
+                    // Reactivar el escáner después de un error
+                    setTimeout(() => {
+                        scanCooldown = false;
+                        startScanner();
+                    }, 2000);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 showStatus(scanResult, 'Error de conexión con Google Sheets', 'error');
+                
+                // Reactivar el escáner después de un error
+                setTimeout(() => {
+                    scanCooldown = false;
+                    startScanner();
+                }, 2000);
             });
-        }
-        
-        // Login de administrador
-        function adminLogin() {
-            if (adminPassword.value === ADMIN_PASSWORD) {
-                isAdminLoggedIn = true;
-                adminLoginSection.classList.add('hidden');
-                adminSection.classList.remove('hidden');
-                adminPassword.value = "";
-                updateWorkerList();
-                updateAttendanceRecords();
-            } else {
-                showStatus(loginStatus, 'Contraseña incorrecta', 'error');
-            }
-        }
-        
-        // Logout de administrador
-        function adminLogout() {
-            isAdminLoggedIn = false;
-            adminLoginSection.classList.remove('hidden');
-            adminSection.classList.add('hidden');
         }
         
         // Actualizar lista de trabajadores
@@ -820,14 +946,14 @@
                         updateWorkerList();
                         updateAttendanceRecords();
                         
-                        showStatus(adminSection, 'Trabajador eliminado correctamente', 'success');
+                        showStatus(workerList, 'Trabajador eliminado correctamente', 'success');
                     } else {
-                        showStatus(adminSection, 'Error al eliminar trabajador: ' + data.message, 'error');
+                        showStatus(workerList, 'Error al eliminar trabajador: ' + data.message, 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showStatus(adminSection, 'Error de conexión con Google Sheets', 'error');
+                    showStatus(workerList, 'Error de conexión con Google Sheets', 'error');
                 });
             }
         }
