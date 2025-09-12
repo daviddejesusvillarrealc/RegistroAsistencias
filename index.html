@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Registro de Asistencias con QR</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <title>Sistema de Asistencias con QR</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        /* Mantener todos los estilos anteriores */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -17,67 +16,41 @@
         
         body {
             background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
             padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
         }
         
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
+            background-color: white;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            border-radius: 5px;
-        }
-        
-        .auth-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
+            padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+            margin-bottom: 20px;
         }
         
-        .admin-section, .employee-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+        h1, h2, h3 {
+            color: #333;
+            margin-bottom: 15px;
         }
         
-        h2 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
         
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        input, button, select {
-            padding: 0.8rem;
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
+            border-radius: 5px;
+            font-size: 16px;
         }
         
         button {
-            background-color: #3498db;
+            background-color: #4285f4;
             color: white;
             border: none;
             cursor: pointer;
@@ -85,578 +58,287 @@
         }
         
         button:hover {
-            background-color: #2980b9;
+            background-color: #3367d6;
         }
         
-        .qr-scanner {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
+        button.secondary {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        button.secondary:hover {
+            background-color: #e1e1e1;
+        }
+        
+        button.danger {
+            background-color: #ea4335;
+        }
+        
+        button.danger:hover {
+            background-color: #d33426;
+        }
+        
+        #qrcode {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        #scanner-container {
             position: relative;
-            display: none;
+            width: 100%;
+            margin: 20px 0;
         }
         
         #video {
             width: 100%;
-            border-radius: 8px;
+            border-radius: 5px;
             background-color: #000;
         }
         
-        .scan-region {
+        #scan-region {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 70%;
             height: 200px;
-            border: 2px solid #3498db;
-            border-radius: 8px;
+            border: 2px solid #fff;
             box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
         }
         
-        .employee-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .employee-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            width: calc(33.333% - 1rem);
-            min-width: 250px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .delete-employee {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .delete-employee:hover {
-            background-color: #c0392b;
-        }
-        
-        .qr-code {
-            margin: 0.5rem 0;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .qr-code canvas {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        
-        th, td {
-            border: 1px solid #ddd;
-            padding: 0.75rem;
-            text-align: left;
-        }
-        
-        th {
-            background-color: #f2f2f2;
-        }
-        
-        .logout-btn {
-            background-color: #e74c3c;
-            margin-top: 1rem;
-        }
-        
-        .logout-btn:hover {
-            background-color: #c0392b;
-        }
-        
-        .notification {
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 4px;
-            text-align: center;
-        }
-        
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .nav-btn {
-            padding: 10px 20px;
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .nav-btn:hover {
-            background-color: #1a2530;
-        }
-        
-        .admin-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .admin-tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            border-radius: 5px 5px 0 0;
-            margin-right: 5px;
-        }
-        
-        .admin-tab.active {
-            background-color: #fff;
-            border-bottom: 1px solid #fff;
-            margin-bottom: -1px;
-        }
-        
-        .tab-content {
+        .hidden {
             display: none;
         }
         
-        .tab-content.active {
-            display: block;
+        .worker-list {
+            margin-top: 20px;
         }
         
-        .camera-controls {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .camera-btn {
-            padding: 10px 20px;
-            margin: 0 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .start-camera {
-            background-color: #27ae60;
-            color: white;
-        }
-        
-        .stop-camera {
-            background-color: #e74c3c;
-            color: white;
-        }
-        
-        .load-records-btn {
-            background-color: #9b59b6;
-            color: white;
-            margin-bottom: 15px;
-        }
-        
-        .filters {
+        .worker-item {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
         
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            min-width: 150px;
+        .admin-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .login-section {
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            input, select, button {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Sistema de Registro de Asistencias con QR</h1>
-        </header>
+        <h1>Sistema de Registro de Asistencias</h1>
         
-        <div class="nav-buttons">
-            <button id="showEmployeeBtn" class="nav-btn">Modo Empleados</button>
-            <button id="showAdminBtn" class="nav-btn">Modo Administrador</button>
+        <!-- Sección de login para administrador -->
+        <div class="section login-section" id="adminLoginSection">
+            <h2>Acceso Administrador</h2>
+            <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+            <button id="loginBtn">Iniciar sesión como administrador</button>
         </div>
         
-        <section id="authSection" class="auth-section" style="display: none;">
-            <h2>Iniciar Sesión como Administrador</h2>
-            <form id="loginForm">
-                <input type="text" id="username" placeholder="Usuario" required>
-                <input type="password" id="password" placeholder="Contraseña" required>
-                <button type="submit">Ingresar</button>
-            </form>
-        </section>
+        <!-- Sección para agregar trabajador -->
+        <div class="section">
+            <h2>Registrar Nuevo Trabajador</h2>
+            <input type="text" id="workerName" placeholder="Nombre del trabajador">
+            <input type="text" id="workerId" placeholder="ID del trabajador">
+            <button id="generateQRBtn">Generar código QR</button>
+            <div id="qrcode"></div>
+        </div>
         
-        <section id="adminSection" class="admin-section" style="display: none;">
-            <h2>Panel de Administración</h2>
-            <div id="notificationArea"></div>
-            
-            <div class="admin-tabs">
-                <div class="admin-tab active" data-tab="scanner">Escanear QR</div>
-                <div class="admin-tab" data-tab="attendance">Registros</div>
-                <div class="admin-tab" data-tab="employees">Gestionar Empleados</div>
+        <!-- Sección para escanear QR -->
+        <div class="section">
+            <h2>Registrar Asistencia</h2>
+            <button id="startScanBtn">Abrir cámara para escanear QR</button>
+            <div id="scanner-container" class="hidden">
+                <video id="video" playsinline></video>
+                <div id="scan-region"></div>
             </div>
-            
-            <div class="tab-content active" id="scanner-tab">
-                <h3>Registrar Asistencia con QR</h3>
-                <div class="camera-controls">
-                    <button id="startCamera" class="camera-btn start-camera">Activar Cámara</button>
-                    <button id="stopCamera" class="camera-btn stop-camera" style="display: none;">Desactivar Cámara</button>
-                </div>
-                <div class="qr-scanner" id="qrScanner">
-                    <video id="video" playsinline></video>
-                    <div class="scan-region"></div>
-                </div>
-            </div>
-            
-            <div class="tab-content" id="attendance-tab">
-                <h3>Registros de Asistencia</h3>
-                <button id="loadRecordsBtn" class="load-records-btn">Cargar Registros desde Google Sheets</button>
-                
-                <div class="filters">
-                    <div class="filter-group">
-                        <label for="filterEmployee">Filtrar por empleado:</label>
-                        <select id="filterEmployee">
-                            <option value="">Todos los empleados</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filterDate">Filtrar por fecha:</label>
-                        <input type="date" id="filterDate">
-                    </div>
-                    <div class="filter-group">
-                        <label for="filterMonth">Filtrar por mes:</label>
-                        <input type="month" id="filterMonth">
-                    </div>
-                </div>
-                
-                <div style="overflow-x: auto;">
-                    <table id="attendanceTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendanceBody">
-                            <!-- Los registros se cargarán aquí -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="tab-content" id="employees-tab">
-                <h3>Gestión de Empleados</h3>
-                <div class="employee-cards" id="adminEmployeeCards">
-                    <!-- Los empleados se listarán aquí con opción de eliminar -->
-                </div>
-            </div>
-            
-            <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
-        </section>
+            <button id="stopScanBtn" class="hidden secondary">Cerrar cámara</button>
+            <div id="scan-result"></div>
+        </div>
         
-        <section id="employeeSection" class="employee-section">
-            <h2>Generar Códigos QR para Trabajadores</h2>
-            <form id="employeeForm">
-                <input type="text" id="employeeId" placeholder="ID del Trabajador" required>
-                <input type="text" id="employeeName" placeholder="Nombre del Trabajador" required>
-                <button type="submit">Generar QR</button>
-            </form>
+        <!-- Sección de administrador (solo visible después de login) -->
+        <div id="adminSection" class="admin-section hidden">
+            <h2>Panel de Administrador</h2>
             
-            <div class="employee-cards" id="employeeCards">
-                <!-- Las tarjetas de empleados se generarán aquí -->
+            <div class="section">
+                <h3>Eliminar Trabajador</h3>
+                <div id="workerList" class="worker-list"></div>
             </div>
-        </section>
+            
+            <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+        </div>
     </div>
 
     <script>
-        // URLs de tu Google Apps Script (cambia esto por tus URLs)
-        const ATTENDANCE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyop56_a1SFqriFBaPvDT8hN55RUdE-6O2l9eBsAOmhR_qvnJGfodF8pSQ7Y3B0dhrUOg/exec'; // Para asistencias
-        const EMPLOYEES_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyop56_a1SFqriFBaPvDT8hN55RUdE-6O2l9eBsAOmhR_qvnJGfodF8pSQ7Y3B0dhrUOg/exec'; // Para empleados
-        const GET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyop56_a1SFqriFBaPvDT8hN55RUdE-6O2l9eBsAOmhR_qvnJGfodF8pSQ7Y3B0dhrUOg/exec'; // Para obtener registros
-        
-        // Datos de ejemplo (en un caso real, esto vendría de una base de datos)
-        const adminCredentials = {
-            username: "admin",
-            password: "admin123"
-        };
-
-        // Almacenamiento local como respaldo
-        let employees = JSON.parse(localStorage.getItem('employees')) || [];
-        let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
-        let lastScanTime = {}; // Para evitar múltiples registros en un mismo minuto
+        // Configuración
+        const ADMIN_PASSWORD = "admin123"; // Cambia esta contraseña en producción
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxX_bcvpu7iU5atU0Zlz7Rl9u9mKVdJa6-bbQe7AzSj09Zmt4qfrJyXr37EYIFwKyTuQw/exec"; // Reemplaza con tu URL de Google Apps Script
         
         // Elementos del DOM
-        const authSection = document.getElementById('authSection');
+        const adminLoginSection = document.getElementById('adminLoginSection');
         const adminSection = document.getElementById('adminSection');
-        const employeeSection = document.getElementById('employeeSection');
-        const loginForm = document.getElementById('loginForm');
-        const employeeForm = document.getElementById('employeeForm');
-        const employeeCards = document.getElementById('employeeCards');
-        const adminEmployeeCards = document.getElementById('adminEmployeeCards');
-        const attendanceBody = document.getElementById('attendanceBody');
+        const adminPassword = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
-        const showEmployeeBtn = document.getElementById('showEmployeeBtn');
-        const showAdminBtn = document.getElementById('showAdminBtn');
-        const notificationArea = document.getElementById('notificationArea');
-        const adminTabs = document.querySelectorAll('.admin-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const startCameraBtn = document.getElementById('startCamera');
-        const stopCameraBtn = document.getElementById('stopCamera');
-        const qrScanner = document.getElementById('qrScanner');
-        const loadRecordsBtn = document.getElementById('loadRecordsBtn');
-        const filterEmployee = document.getElementById('filterEmployee');
-        const filterDate = document.getElementById('filterDate');
-        const filterMonth = document.getElementById('filterMonth');
+        const workerName = document.getElementById('workerName');
+        const workerId = document.getElementById('workerId');
+        const generateQRBtn = document.getElementById('generateQRBtn');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const startScanBtn = document.getElementById('startScanBtn');
+        const stopScanBtn = document.getElementById('stopScanBtn');
+        const scannerContainer = document.getElementById('scanner-container');
+        const video = document.getElementById('video');
+        const scanResult = document.getElementById('scan-result');
+        const workerList = document.getElementById('workerList');
         
-        // Inicializar la cámara para escanear QR
-        let video = document.getElementById('video');
-        let scanning = false;
+        // Variables globales
+        let workers = JSON.parse(localStorage.getItem('workers')) || [];
+        let isScanning = false;
+        let videoStream = null;
         
-        // Función para mostrar notificaciones
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notificationArea.appendChild(notification);
+        // Inicializar
+        function init() {
+            updateWorkerList();
             
-            // Eliminar la notificación después de 3 segundos
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            // Event listeners
+            loginBtn.addEventListener('click', adminLogin);
+            logoutBtn.addEventListener('click', adminLogout);
+            generateQRBtn.addEventListener('click', generateQRCode);
+            startScanBtn.addEventListener('click', startScanner);
+            stopScanBtn.addEventListener('click', stopScanner);
         }
         
-        // Función para enviar datos de asistencia a Google Sheets
-        async function sendAttendanceToGoogleSheets(data) {
+        // Login de administrador
+        function adminLogin() {
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                adminLoginSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                adminPassword.value = "";
+            } else {
+                alert("Contraseña incorrecta");
+            }
+        }
+        
+        // Logout de administrador
+        function adminLogout() {
+            adminLoginSection.classList.remove('hidden');
+            adminSection.classList.add('hidden');
+        }
+        
+        // Generar código QR
+        function generateQRCode() {
+            const name = workerName.value.trim();
+            const id = workerId.value.trim();
+            
+            if (!name || !id) {
+                alert("Por favor, complete todos los campos");
+                return;
+            }
+            
+            // Limpiar QR anterior
+            qrcodeDiv.innerHTML = "";
+            
+            // Crear datos para el QR
+            const workerData = JSON.stringify({
+                name: name,
+                id: id,
+                timestamp: new Date().toISOString()
+            });
+            
             try {
-                const response = await fetch(ATTENDANCE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain; charset=utf-8',
-                    },
-                    body: JSON.stringify(data)
+                // Generar QR
+                new QRCode(qrcodeDiv, {
+                    text: workerData,
+                    width: 200,
+                    height: 200
                 });
                 
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error al enviar datos a Google Sheets:', error);
-                // Guardar en localStorage como respaldo
-                attendanceRecords.push(data);
-                localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                
-                return {
-                    result: "success",
-                    message: "Datos guardados localmente (sin conexión)"
+                // Guardar trabajador
+                const worker = {
+                    name: name,
+                    id: id,
+                    qrData: workerData
                 };
-            }
-        }
-        
-        // Función para enviar datos de empleados a Google Sheets
-        async function sendEmployeeToGoogleSheets(data) {
-            try {
-                const response = await fetch(EMPLOYEES_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain; charset=utf-8',
-                    },
-                    body: JSON.stringify(data)
-                });
                 
-                const result = await response.json();
-                return result;
+                workers.push(worker);
+                localStorage.setItem('workers', JSON.stringify(workers));
+                
+                // Enviar datos a Google Sheets
+                sendToGoogleSheets(worker, 'register');
+                
+                alert("Trabajador registrado correctamente");
+                
+                // Limpiar campos
+                workerName.value = "";
+                workerId.value = "";
+                
+                // Actualizar lista de trabajadores
+                updateWorkerList();
+                
             } catch (error) {
-                console.error('Error al enviar empleado a Google Sheets:', error);
-                return {
-                    result: "error",
-                    message: error.toString()
-                };
+                console.error("Error al generar QR:", error);
+                alert("Error al generar el código QR");
             }
         }
         
-        // Función para obtener registros desde Google Sheets
-        async function getRecordsFromGoogleSheets() {
-            try {
-                showNotification('Cargando registros desde Google Sheets...', 'success');
-                
-                const response = await fetch(GET_SCRIPT_URL);
-                if (!response.ok) {
-                    throw new Error('Error al obtener los registros');
-                }
-                
-                const records = await response.json();
-                return records;
-            } catch (error) {
-                console.error('Error al obtener datos de Google Sheets:', error);
-                showNotification('Error al cargar registros: ' + error.message, 'error');
-                
-                // Devolver registros locales como respaldo
-                return attendanceRecords;
-            }
-        }
-        
-        // Función para cargar registros desde Google Sheets
-        async function loadAttendanceRecords() {
-            try {
-                const records = await getRecordsFromGoogleSheets();
-                
-                // Si tenemos registros, actualizamos la variable local
-                if (records && records.length > 0) {
-                    attendanceRecords = records;
-                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                }
-                
-                // Aplicar filtros
-                let filteredRecords = [...attendanceRecords];
-                
-                // Filtrar por empleado
-                const employeeFilter = filterEmployee.value;
-                if (employeeFilter) {
-                    filteredRecords = filteredRecords.filter(record => record.employeeId === employeeFilter);
-                }
-                
-                // Filtrar por fecha
-                const dateFilter = filterDate.value;
-                if (dateFilter) {
-                    filteredRecords = filteredRecords.filter(record => record.date === dateFilter);
-                }
-                
-                // Filtrar por mes
-                const monthFilter = filterMonth.value;
-                if (monthFilter) {
-                    filteredRecords = filteredRecords.filter(record => {
-                        const recordDate = new Date(record.date);
-                        const recordMonth = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
-                        return recordMonth === monthFilter;
-                    });
-                }
-                
-                // Limpiar tabla
-                attendanceBody.innerHTML = '';
-                
-                // Mostrar registros en la tabla
-                if (filteredRecords.length === 0) {
-                    attendanceBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros que coincidan con los filtros</td></tr>';
-                } else {
-                    filteredRecords.forEach(record => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${record.employeeId}</td>
-                            <td>${record.employeeName}</td>
-                            <td>${record.date}</td>
-                            <td>${record.time}</td>
-                            <td>
-                                <button class="delete-record" data-id="${record.id}">Eliminar</button>
-                            </td>
-                        `;
-                        attendanceBody.appendChild(row);
-                    });
-                    
-                    // Añadir event listeners a los botones de eliminar
-                    document.querySelectorAll('.delete-record').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const recordId = this.getAttribute('data-id');
-                            deleteAttendanceRecord(recordId);
-                        });
-                    });
-                }
-                
-                showNotification('Registros cargados correctamente', 'success');
-            } catch (error) {
-                console.error('Error al cargar registros:', error);
-                showNotification('Error al cargar registros: ' + error.message, 'error');
-            }
-        }
-        
-        // Función para eliminar un registro de asistencia
-        async function deleteAttendanceRecord(recordId) {
-            if (confirm('¿Estás seguro de que deseas eliminar este registro de asistencia?')) {
-                // Eliminar del array local
-                attendanceRecords = attendanceRecords.filter(record => record.id != recordId);
-                
-                // Actualizar localStorage
-                localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                
-                // Recargar la tabla
-                loadAttendanceRecords();
-                
-                showNotification('Registro eliminado correctamente', 'success');
-                
-                // En una implementación real, aquí enviarías una solicitud para eliminar el registro de Google Sheets
-            }
-        }
-        
-        // Función para iniciar el escáner de QR
-        function startQRScanner() {
-            scanning = true;
-            qrScanner.style.display = 'block';
-            startCameraBtn.style.display = 'none';
-            stopCameraBtn.style.display = 'inline-block';
+        // Iniciar escáner
+        function startScanner() {
+            scannerContainer.classList.remove('hidden');
+            startScanBtn.classList.add('hidden');
+            stopScanBtn.classList.remove('hidden');
             
+            // Solicitar acceso a la cámara
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(function(stream) {
-                    video.srcObject = stream;
-                    video.setAttribute("playsinline", true);
-                    video.play();
-                    requestAnimationFrame(tick);
-                })
-                .catch(function(err) {
-                    console.error("Error al acceder a la cámara: ", err);
-                    showNotification("Error al acceder a la cámara. Asegúrate de permitir el acceso.", "error");
-                    stopQRScanner();
-                });
+            .then(function(stream) {
+                videoStream = stream;
+                video.srcObject = stream;
+                video.play();
+                isScanning = true;
+                scanQRCode();
+            })
+            .catch(function(err) {
+                console.error("Error al acceder a la cámara: ", err);
+                alert("No se pudo acceder a la cámara");
+            });
         }
         
-        // Función para detener el escáner de QR
-        function stopQRScanner() {
-            scanning = false;
-            qrScanner.style.display = 'none';
-            startCameraBtn.style.display = 'inline-block';
-            stopCameraBtn.style.display = 'none';
+        // Detener escáner
+        function stopScanner() {
+            isScanning = false;
+            scannerContainer.classList.add('hidden');
+            startScanBtn.classList.remove('hidden');
+            stopScanBtn.classList.add('hidden');
+            scanResult.innerHTML = "";
             
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
             }
         }
         
-        // Función para procesar el video y detectar códigos QR
-        function tick() {
-            if (!scanning) return;
+        // Escanear código QR
+        function scanQRCode() {
+            if (!isScanning) return;
             
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 const canvas = document.createElement('canvas');
@@ -666,350 +348,131 @@
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
                 
                 if (code) {
-                    // Encontramos un código QR
-                    processScannedQR(code.data);
+                    try {
+                        const workerData = JSON.parse(code.data);
+                        registerAttendance(workerData);
+                    } catch (e) {
+                        console.error("Error al procesar QR:", e);
+                        scanResult.innerHTML = "<p style='color: red;'>Código QR inválido</p>";
+                    }
                 }
             }
             
-            requestAnimationFrame(tick);
+            if (isScanning) {
+                requestAnimationFrame(scanQRCode);
+            }
         }
         
-        // Función para procesar el código QR escaneado
-        async function processScannedQR(qrData) {
-            try {
-                const data = JSON.parse(qrData);
+        // Registrar asistencia
+        function registerAttendance(workerData) {
+            // Buscar trabajador
+            const worker = workers.find(w => w.id === workerData.id);
+            
+            if (worker) {
+                const now = new Date();
+                const attendanceData = {
+                    name: worker.name,
+                    id: worker.id,
+                    timestamp: now.toISOString(),
+                    date: now.toLocaleDateString(),
+                    time: now.toLocaleTimeString()
+                };
                 
-                // Verificar que los datos tengan la estructura esperada
-                if (data.employeeId && data.employeeName) {
-                    // Verificar si ya se escaneó recientemente (en el último minuto)
-                    const now = new Date();
-                    const currentMinute = now.getMinutes();
-                    const currentHour = now.getHours();
-                    const currentDate = now.toDateString();
-                    
-                    const employeeKey = `${data.employeeId}-${currentDate}-${currentHour}-${currentMinute}`;
-                    
-                    if (lastScanTime[employeeKey]) {
-                        showNotification(`Ya se registró asistencia para ${data.employeeName} en este minuto.`, "error");
-                        stopQRScanner();
-                        return;
-                    }
-                    
-                    // Registrar la asistencia
-                    const attendanceRecord = {
-                        id: Date.now(),
-                        employeeId: data.employeeId,
-                        employeeName: data.employeeName,
-                        date: now.toLocaleDateString(),
-                        time: now.toLocaleTimeString(),
-                        timestamp: now.getTime()
-                    };
-                    
-                    // Enviar a Google Sheets
-                    const result = await sendAttendanceToGoogleSheets(attendanceRecord);
-                    
-                    if (result.result === "success") {
-                        showNotification(`Asistencia registrada para ${data.employeeName}`, "success");
-                        
-                        // Marcar como escaneado en este minuto
-                        lastScanTime[employeeKey] = true;
-                        
-                        // Limpiar después de 60 segundos
-                        setTimeout(() => {
-                            delete lastScanTime[employeeKey];
-                        }, 60000);
-                    } else {
-                        showNotification(`Error: ${result.message}`, "error");
-                    }
-                    
-                    // Detener la cámara después de leer
-                    stopQRScanner();
-                    
-                    // Actualizar la tabla de registros
-                    loadAttendanceRecords();
-                }
-            } catch (e) {
-                console.error("Error procesando QR: ", e);
-                showNotification("Código QR inválido", "error");
-            }
-        }
-        
-        // Función para generar un código QR
-        function generateQRCode(elementId, data) {
-            const qrElement = document.getElementById(elementId);
-            if (!qrElement) {
-                console.error("Elemento no encontrado: ", elementId);
-                return;
-            }
-            
-            qrElement.innerHTML = '';
-            
-            // Crear un elemento canvas para el código QR
-            const canvas = document.createElement('canvas');
-            qrElement.appendChild(canvas);
-            
-            // Usar la librería QRCode para generar el código QR en el canvas
-            try {
-                QRCode.toCanvas(canvas, JSON.stringify(data), {
-                    width: 150,
-                    margin: 1,
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
-                }, function(error) {
-                    if (error) {
-                        console.error("Error al generar QR: ", error);
-                        qrElement.innerHTML = 'Error al generar QR';
-                    }
-                });
-            } catch (error) {
-                console.error("Error en la generación del QR: ", error);
-                qrElement.innerHTML = 'Error al generar QR';
-            }
-        }
-        
-        // Función para cargar los empleados en el modo empleado
-        function loadEmployees() {
-            employeeCards.innerHTML = '';
-            
-            if (employees.length === 0) {
-                employeeCards.innerHTML = '<p>No hay empleados registrados. Agrega uno usando el formulario superior.</p>';
-                return;
-            }
-            
-            employees.forEach(employee => {
-                const card = document.createElement('div');
-                card.className = 'employee-card';
-                card.innerHTML = `
-                    <h4>${employee.name}</h4>
-                    <p>ID: ${employee.id}</p>
-                    <div class="qr-code" id="qr-${employee.id}"></div>
-                    <p><small>Escanea este código para registrar asistencia</small></p>
+                // Enviar a Google Sheets
+                sendToGoogleSheets(attendanceData, 'attendance');
+                
+                // Mostrar resultado
+                scanResult.innerHTML = `
+                    <p style='color: green; font-weight: bold;'>Asistencia registrada</p>
+                    <p>Nombre: ${worker.name}</p>
+                    <p>ID: ${worker.id}</p>
+                    <p>Hora: ${now.toLocaleTimeString()}</p>
                 `;
-                employeeCards.appendChild(card);
                 
-                // Generar el código QR después de un breve delay para asegurar que el elemento exista en el DOM
-                setTimeout(() => {
-                    generateQRCode(`qr-${employee.id}`, {
-                        employeeId: employee.id,
-                        employeeName: employee.name
-                    });
-                }, 100);
-            });
-        }
-        
-        // Función para cargar los empleados en el panel de administración
-        function loadAdminEmployees() {
-            adminEmployeeCards.innerHTML = '';
-            
-            if (employees.length === 0) {
-                adminEmployeeCards.innerHTML = '<p>No hay empleados registrados.</p>';
-                return;
-            }
-            
-            employees.forEach(employee => {
-                const card = document.createElement('div');
-                card.className = 'employee-card';
-                card.innerHTML = `
-                    <button class="delete-employee" data-id="${employee.id}">X</button>
-                    <h4>${employee.name}</h4>
-                    <p>ID: ${employee.id}</p>
-                    <div class="qr-code" id="admin-qr-${employee.id}"></div>
-                `;
-                adminEmployeeCards.appendChild(card);
-                
-                // Generar el código QR
-                setTimeout(() => {
-                    generateQRCode(`admin-qr-${employee.id}`, {
-                        employeeId: employee.id,
-                        employeeName: employee.name
-                    });
-                }, 100);
-                
-                // Añadir evento de eliminación
-                const deleteButton = card.querySelector('.delete-employee');
-                deleteButton.addEventListener('click', function() {
-                    const employeeId = this.getAttribute('data-id');
-                    deleteEmployee(employeeId);
-                });
-            });
-            
-            // Actualizar el filtro de empleados
-            updateEmployeeFilter();
-        }
-        
-        // Función para actualizar el filtro de empleados
-        function updateEmployeeFilter() {
-            filterEmployee.innerHTML = '<option value="">Todos los empleados</option>';
-            
-            employees.forEach(employee => {
-                const option = document.createElement('option');
-                option.value = employee.id;
-                option.textContent = `${employee.name} (${employee.id})`;
-                filterEmployee.appendChild(option);
-            });
-        }
-        
-        // Función para eliminar un empleado
-        function deleteEmployee(employeeId) {
-            if (confirm('¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.')) {
-                // Filtrar el empleado a eliminar
-                employees = employees.filter(emp => emp.id !== employeeId);
-                
-                // También eliminar sus registros de asistencia
-                attendanceRecords = attendanceRecords.filter(record => record.employeeId !== employeeId);
-                
-                // Actualizar el localStorage
-                localStorage.setItem('employees', JSON.stringify(employees));
-                localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                
-                // Recargar las listas
-                loadEmployees();
-                loadAdminEmployees();
-                loadAttendanceRecords();
-                
-                showNotification('Empleado eliminado correctamente', 'success');
-            }
-        }
-        
-        // Event Listeners
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            if (username === adminCredentials.username && password === adminCredentials.password) {
-                authSection.style.display = 'none';
-                adminSection.style.display = 'block';
-                employeeSection.style.display = 'none';
-                
-                // Cargar los registros de asistencia
-                loadAttendanceRecords();
-                
-                // Cargar la lista de empleados en el panel de administración
-                loadAdminEmployees();
+                // Detener escáner después de 3 segundos
+                setTimeout(stopScanner, 3000);
             } else {
-                alert('Credenciales incorrectas');
+                scanResult.innerHTML = "<p style='color: red;'>Trabajador no registrado</p>";
             }
-        });
+        }
         
-        employeeForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Enviar datos a Google Sheets
+        function sendToGoogleSheets(data, action) {
+            // Esta función enviará los datos a Google Sheets a través de Google Apps Script
+            // Debes reemplazar SHEET_URL con la URL de tu Web App de Google Apps Script
             
-            const employeeId = document.getElementById('employeeId').value;
-            const employeeName = document.getElementById('employeeName').value;
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('data', JSON.stringify(data));
             
-            // Verificar si el ID ya existe
-            if (employees.some(emp => emp.id === employeeId)) {
-                alert('Ya existe un empleado con este ID');
+            fetch(SHEET_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('Datos enviados a Google Sheets:', result);
+            })
+            .catch(error => {
+                console.error('Error al enviar a Google Sheets:', error);
+            });
+        }
+        
+        // Actualizar lista de trabajadores
+        function updateWorkerList() {
+            workerList.innerHTML = "";
+            
+            if (workers.length === 0) {
+                workerList.innerHTML = "<p>No hay trabajadores registrados</p>";
                 return;
             }
             
-            // Agregar el nuevo empleado
-            const newEmployee = {
-                id: employeeId,
-                name: employeeName
-            };
-            
-            employees.push(newEmployee);
-            
-            // Guardar en el almacenamiento
-            localStorage.setItem('employees', JSON.stringify(employees));
-            
-            // Enviar a Google Sheets
-            sendEmployeeToGoogleSheets(newEmployee).then(result => {
-                if (result.result === "success") {
-                    showNotification('Empleado guardado en Google Sheets', 'success');
-                } else {
-                    showNotification('Error al guardar empleado en Google Sheets: ' + result.message, 'error');
-                }
+            workers.forEach((worker, index) => {
+                const workerItem = document.createElement('div');
+                workerItem.className = 'worker-item';
+                workerItem.innerHTML = `
+                    <div>
+                        <strong>${worker.name}</strong> (ID: ${worker.id})
+                    </div>
+                    <button class="danger" data-index="${index}">Eliminar</button>
+                `;
+                workerList.appendChild(workerItem);
             });
             
-            // Recargar la lista de empleados
-            loadEmployees();
-            
-            // Limpiar el formulario
-            employeeForm.reset();
-        });
-        
-        logoutBtn.addEventListener('click', function() {
-            // Detener el escáner si está activo
-            stopQRScanner();
-            
-            // Volver a la pantalla de login
-            adminSection.style.display = 'none';
-            authSection.style.display = 'none';
-            employeeSection.style.display = 'block';
-            
-            // Limpiar el formulario
-            loginForm.reset();
-        });
-        
-        showEmployeeBtn.addEventListener('click', function() {
-            authSection.style.display = 'none';
-            adminSection.style.display = 'none';
-            employeeSection.style.display = 'block';
-            stopQRScanner();
-        });
-        
-        showAdminBtn.addEventListener('click', function() {
-            employeeSection.style.display = 'none';
-            adminSection.style.display = 'none';
-            authSection.style.display = 'block';
-        });
-        
-        // Event listeners para los botones de la cámara
-        startCameraBtn.addEventListener('click', startQRScanner);
-        stopCameraBtn.addEventListener('click', stopQRScanner);
-        
-        // Event listener para cargar registros
-        loadRecordsBtn.addEventListener('click', loadAttendanceRecords);
-        
-        // Event listeners para los filtros
-        filterEmployee.addEventListener('change', loadAttendanceRecords);
-        filterDate.addEventListener('change', function() {
-            filterMonth.value = '';
-            loadAttendanceRecords();
-        });
-        filterMonth.addEventListener('change', function() {
-            filterDate.value = '';
-            loadAttendanceRecords();
-        });
-        
-        // Funcionalidad de pestañas en el panel de administración
-        adminTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                
-                // Desactivar todas las pestañas
-                adminTabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(t => t.classList.remove('active'));
-                
-                // Activar la pestaña seleccionada
-                this.classList.add('active');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                
-                // Si se selecciona la pestaña de registros, cargarlos
-                if (tabId === 'attendance') {
-                    loadAttendanceRecords();
-                }
-                
-                // Detener la cámara si no estamos en la pestaña del escáner
-                if (tabId !== 'scanner') {
-                    stopQRScanner();
-                }
+            // Agregar event listeners a los botones de eliminar
+            const deleteButtons = workerList.querySelectorAll('button');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteWorker(index);
+                });
             });
-        });
+        }
+        
+        // Eliminar trabajador
+        function deleteWorker(index) {
+            if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
+                const worker = workers[index];
+                
+                // Enviar a Google Sheets
+                sendToGoogleSheets(worker, 'delete');
+                
+                // Eliminar de la lista local
+                workers.splice(index, 1);
+                localStorage.setItem('workers', JSON.stringify(workers));
+                
+                // Actualizar lista
+                updateWorkerList();
+                
+                alert("Trabajador eliminado correctamente");
+            }
+        }
         
         // Inicializar la aplicación
-        loadEmployees();
+        window.onload = init;
     </script>
 </body>
 </html>
