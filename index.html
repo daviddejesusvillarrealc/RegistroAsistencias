@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
+        /* Mantener todos los estilos anteriores */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -404,11 +405,10 @@
     </div>
 
     <script>
-        // URL de tu Google Apps Script (cambia esto por tu URL)
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoXGnLfLUUq9CVDmAt2jcWWgO_k_FOTuyU_c-yL8UqTfok4x3aapC7uXOq49XeKNGWvg/exec';
-        
-        // URL para obtener registros (añade esta función a tu Google Apps Script)
-        const GET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoXGnLfLUUq9CVDmAt2jcWWgO_k_FOTuyU_c-yL8UqTfok4x3aapC7uXOq49XeKNGWvg/exec';
+        // URLs de tu Google Apps Script (cambia esto por tus URLs)
+        const ATTENDANCE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe1thadD7tW1SaTg6_h1X75dAfipWpgiiK9SNxhxtV5CIMZvEY4Wtly71a16fyUdzC/exec'; // Para asistencias
+        const EMPLOYEES_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe1thadD7tW1SaTg6_h1X75dAfipWpgiiK9SNxhxtV5CIMZvEY4Wtly71a16fyUdzC/exec'; // Para empleados
+        const GET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe1thadD7tW1SaTg6_h1X75dAfipWpgiiK9SNxhxtV5CIMZvEY4Wtly71a16fyUdzC/exec'; // Para obtener registros
         
         // Datos de ejemplo (en un caso real, esto vendría de una base de datos)
         const adminCredentials = {
@@ -419,6 +419,7 @@
         // Almacenamiento local como respaldo
         let employees = JSON.parse(localStorage.getItem('employees')) || [];
         let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
+        let lastScanTime = {}; // Para evitar múltiples registros en un mismo minuto
         
         // Elementos del DOM
         const authSection = document.getElementById('authSection');
@@ -460,10 +461,10 @@
             }, 3000);
         }
         
-        // Función para enviar datos a Google Sheets
-        async function sendToGoogleSheets(data) {
+        // Función para enviar datos de asistencia a Google Sheets
+        async function sendAttendanceToGoogleSheets(data) {
             try {
-                const response = await fetch(SCRIPT_URL, {
+                const response = await fetch(ATTENDANCE_SCRIPT_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'text/plain; charset=utf-8',
@@ -482,6 +483,28 @@
                 return {
                     result: "success",
                     message: "Datos guardados localmente (sin conexión)"
+                };
+            }
+        }
+        
+        // Función para enviar datos de empleados a Google Sheets
+        async function sendEmployeeToGoogleSheets(data) {
+            try {
+                const response = await fetch(EMPLOYEES_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain; charset=utf-8',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error al enviar empleado a Google Sheets:', error);
+                return {
+                    result: "error",
+                    message: error.toString()
                 };
             }
         }
@@ -663,21 +686,43 @@
                 
                 // Verificar que los datos tengan la estructura esperada
                 if (data.employeeId && data.employeeName) {
-                    // Registrar la asistencia
+                    // Verificar si ya se escaneó recientemente (en el último minuto)
                     const now = new Date();
+                    const currentMinute = now.getMinutes();
+                    const currentHour = now.getHours();
+                    const currentDate = now.toDateString();
+                    
+                    const employeeKey = `${data.employeeId}-${currentDate}-${currentHour}-${currentMinute}`;
+                    
+                    if (lastScanTime[employeeKey]) {
+                        showNotification(`Ya se registró asistencia para ${data.employeeName} en este minuto.`, "error");
+                        stopQRScanner();
+                        return;
+                    }
+                    
+                    // Registrar la asistencia
                     const attendanceRecord = {
                         id: Date.now(),
                         employeeId: data.employeeId,
                         employeeName: data.employeeName,
                         date: now.toLocaleDateString(),
-                        time: now.toLocaleTimeString()
+                        time: now.toLocaleTimeString(),
+                        timestamp: now.getTime()
                     };
                     
                     // Enviar a Google Sheets
-                    const result = await sendToGoogleSheets(attendanceRecord);
+                    const result = await sendAttendanceToGoogleSheets(attendanceRecord);
                     
                     if (result.result === "success") {
                         showNotification(`Asistencia registrada para ${data.employeeName}`, "success");
+                        
+                        // Marcar como escaneado en este minuto
+                        lastScanTime[employeeKey] = true;
+                        
+                        // Limpiar después de 60 segundos
+                        setTimeout(() => {
+                            delete lastScanTime[employeeKey];
+                        }, 60000);
                     } else {
                         showNotification(`Error: ${result.message}`, "error");
                     }
@@ -868,13 +913,24 @@
             }
             
             // Agregar el nuevo empleado
-            employees.push({
+            const newEmployee = {
                 id: employeeId,
                 name: employeeName
-            });
+            };
+            
+            employees.push(newEmployee);
             
             // Guardar en el almacenamiento
             localStorage.setItem('employees', JSON.stringify(employees));
+            
+            // Enviar a Google Sheets
+            sendEmployeeToGoogleSheets(newEmployee).then(result => {
+                if (result.result === "success") {
+                    showNotification('Empleado guardado en Google Sheets', 'success');
+                } else {
+                    showNotification('Error al guardar empleado en Google Sheets: ' + result.message, 'error');
+                }
+            });
             
             // Recargar la lista de empleados
             loadEmployees();
