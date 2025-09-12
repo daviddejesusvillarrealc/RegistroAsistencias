@@ -19,6 +19,7 @@
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
+            color: #333;
         }
         
         .container {
@@ -30,8 +31,8 @@
         }
         
         h1, h2, h3 {
-            color: #333;
             margin-bottom: 15px;
+            color: #2c3e50;
         }
         
         .section {
@@ -50,50 +51,58 @@
         }
         
         button {
-            background-color: #4285f4;
+            background-color: #3498db;
             color: white;
             border: none;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-weight: 600;
         }
         
         button:hover {
-            background-color: #3367d6;
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
         }
         
         button.secondary {
-            background-color: #f1f1f1;
-            color: #333;
+            background-color: #7f8c8d;
         }
         
         button.secondary:hover {
-            background-color: #e1e1e1;
+            background-color: #636e70;
         }
         
         button.danger {
-            background-color: #ea4335;
+            background-color: #e74c3c;
         }
         
         button.danger:hover {
-            background-color: #d33426;
+            background-color: #c0392b;
         }
         
         #qrcode {
             margin: 20px 0;
             display: flex;
             justify-content: center;
+            min-height: 220px;
         }
         
         #scanner-container {
             position: relative;
             width: 100%;
             margin: 20px 0;
+            display: none;
         }
         
         #video {
             width: 100%;
             border-radius: 5px;
             background-color: #000;
+            max-height: 400px;
         }
         
         #scan-region {
@@ -133,6 +142,65 @@
             margin-bottom: 20px;
         }
         
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -140,6 +208,21 @@
             
             input, select, button {
                 padding: 10px;
+                font-size: 14px;
+            }
+            
+            .tab {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+            
+            #qrcode {
+                min-height: 180px;
+            }
+            
+            #qrcode canvas {
+                max-width: 180px;
+                height: auto;
             }
         }
     </style>
@@ -148,112 +231,181 @@
     <div class="container">
         <h1>Sistema de Registro de Asistencias</h1>
         
-        <!-- Sección de login para administrador -->
-        <div class="section login-section" id="adminLoginSection">
-            <h2>Acceso Administrador</h2>
-            <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
-            <button id="loginBtn">Iniciar sesión como administrador</button>
+        <div class="tab-container">
+            <div class="tab active" data-tab="register">Registrar</div>
+            <div class="tab" data-tab="attendance">Asistencia</div>
+            <div class="tab" data-tab="admin">Admin</div>
         </div>
         
-        <!-- Sección para agregar trabajador -->
-        <div class="section">
-            <h2>Registrar Nuevo Trabajador</h2>
-            <input type="text" id="workerName" placeholder="Nombre del trabajador">
-            <input type="text" id="workerId" placeholder="ID del trabajador">
-            <button id="generateQRBtn">Generar código QR</button>
-            <div id="qrcode"></div>
+        <!-- Sección de login para administrador -->
+        <div class="tab-content active" id="registerTab">
+            <div class="section">
+                <h2>Registrar Nuevo Trabajador</h2>
+                <input type="text" id="workerName" placeholder="Nombre del trabajador">
+                <input type="text" id="workerId" placeholder="ID del trabajador">
+                <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
+                <button id="generateQRBtn">Generar código QR</button>
+                <div id="qrcode"></div>
+                <div id="registerStatus"></div>
+            </div>
         </div>
         
         <!-- Sección para escanear QR -->
-        <div class="section">
-            <h2>Registrar Asistencia</h2>
-            <button id="startScanBtn">Abrir cámara para escanear QR</button>
-            <div id="scanner-container" class="hidden">
-                <video id="video" playsinline></video>
-                <div id="scan-region"></div>
+        <div class="tab-content" id="attendanceTab">
+            <div class="section">
+                <h2>Registrar Asistencia</h2>
+                <button id="startScanBtn">Abrir cámara para escanear QR</button>
+                <div id="scanner-container">
+                    <video id="video" playsinline></video>
+                    <div id="scan-region"></div>
+                </div>
+                <button id="stopScanBtn" class="secondary hidden">Cerrar cámara</button>
+                <div id="scan-result"></div>
             </div>
-            <button id="stopScanBtn" class="hidden secondary">Cerrar cámara</button>
-            <div id="scan-result"></div>
         </div>
         
-        <!-- Sección de administrador (solo visible después de login) -->
-        <div id="adminSection" class="admin-section hidden">
-            <h2>Panel de Administrador</h2>
-            
-            <div class="section">
-                <h3>Eliminar Trabajador</h3>
-                <div id="workerList" class="worker-list"></div>
+        <!-- Sección de administrador -->
+        <div class="tab-content" id="adminTab">
+            <!-- Sección de login para administrador -->
+            <div class="section login-section" id="adminLoginSection">
+                <h2>Acceso Administrador</h2>
+                <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+                <button id="loginBtn">Iniciar sesión como administrador</button>
+                <div id="loginStatus"></div>
             </div>
             
-            <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+            <!-- Sección de administrador (solo visible después de login) -->
+            <div id="adminSection" class="admin-section hidden">
+                <h2>Panel de Administrador</h2>
+                
+                <div class="section">
+                    <h3>Gestión de Trabajadores</h3>
+                    <button id="refreshWorkersBtn">Actualizar lista</button>
+                    <div id="workerList" class="worker-list"></div>
+                </div>
+                
+                <div class="section">
+                    <h3>Registros de Asistencia</h3>
+                    <button id="refreshAttendanceBtn">Actualizar registros</button>
+                    <div id="attendanceRecords"></div>
+                </div>
+                
+                <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+            </div>
         </div>
     </div>
 
     <script>
         // Configuración
         const ADMIN_PASSWORD = "admin123"; // Cambia esta contraseña en producción
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxX_bcvpu7iU5atU0Zlz7Rl9u9mKVdJa6-bbQe7AzSj09Zmt4qfrJyXr37EYIFwKyTuQw/exec"; // Reemplaza con tu URL de Google Apps Script
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
+        
+        // Almacenamiento local (como respaldo)
+        let workers = JSON.parse(localStorage.getItem('workers')) || [];
+        let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
+        let isAdminLoggedIn = false;
         
         // Elementos del DOM
-        const adminLoginSection = document.getElementById('adminLoginSection');
-        const adminSection = document.getElementById('adminSection');
-        const adminPassword = document.getElementById('adminPassword');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
         const workerName = document.getElementById('workerName');
         const workerId = document.getElementById('workerId');
+        const workerPosition = document.getElementById('workerPosition');
         const generateQRBtn = document.getElementById('generateQRBtn');
         const qrcodeDiv = document.getElementById('qrcode');
+        const registerStatus = document.getElementById('registerStatus');
         const startScanBtn = document.getElementById('startScanBtn');
         const stopScanBtn = document.getElementById('stopScanBtn');
         const scannerContainer = document.getElementById('scanner-container');
         const video = document.getElementById('video');
         const scanResult = document.getElementById('scan-result');
+        const adminLoginSection = document.getElementById('adminLoginSection');
+        const adminSection = document.getElementById('adminSection');
+        const adminPassword = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginStatus = document.getElementById('loginStatus');
+        const logoutBtn = document.getElementById('logoutBtn');
         const workerList = document.getElementById('workerList');
+        const attendanceRecordsDiv = document.getElementById('attendanceRecords');
+        const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
+        const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         
         // Variables globales
-        let workers = JSON.parse(localStorage.getItem('workers')) || [];
         let isScanning = false;
         let videoStream = null;
+        let currentQRCode = null;
         
         // Inicializar
         function init() {
             updateWorkerList();
+            updateAttendanceRecords();
             
-            // Event listeners
-            loginBtn.addEventListener('click', adminLogin);
-            logoutBtn.addEventListener('click', adminLogout);
+            // Event listeners para pestañas
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Event listeners para botones
             generateQRBtn.addEventListener('click', generateQRCode);
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
+            loginBtn.addEventListener('click', adminLogin);
+            logoutBtn.addEventListener('click', adminLogout);
+            refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
+            refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
+            
+            // Cargar workers y registros desde Google Sheets al iniciar
+            fetchWorkersFromGoogleSheets();
+            fetchAttendanceFromGoogleSheets();
         }
         
-        // Login de administrador
-        function adminLogin() {
-            if (adminPassword.value === ADMIN_PASSWORD) {
-                adminLoginSection.classList.add('hidden');
-                adminSection.classList.remove('hidden');
-                adminPassword.value = "";
-            } else {
-                alert("Contraseña incorrecta");
+        // Cambiar pestaña
+        function switchTab(tabId) {
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === tabId + 'Tab') {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // Si se cambia a la pestaña de administrador y no está logeado, mostrar login
+            if (tabId === 'admin' && !isAdminLoggedIn) {
+                adminLoginSection.classList.remove('hidden');
+                adminSection.classList.add('hidden');
             }
-        }
-        
-        // Logout de administrador
-        function adminLogout() {
-            adminLoginSection.classList.remove('hidden');
-            adminSection.classList.add('hidden');
+            
+            // Si se cambia de pestaña, detener el escáner si está activo
+            if (isScanning) {
+                stopScanner();
+            }
         }
         
         // Generar código QR
         function generateQRCode() {
             const name = workerName.value.trim();
             const id = workerId.value.trim();
+            const position = workerPosition.value.trim();
             
-            if (!name || !id) {
-                alert("Por favor, complete todos los campos");
+            if (!name || !id || !position) {
+                showStatus(registerStatus, 'Por favor, complete todos los campos', 'error');
                 return;
             }
+            
+            // Deshabilitar botón mientras se procesa
+            generateQRBtn.disabled = true;
+            generateQRBtn.innerHTML = 'Generando...';
             
             // Limpiar QR anterior
             qrcodeDiv.innerHTML = "";
@@ -262,50 +414,147 @@
             const workerData = JSON.stringify({
                 name: name,
                 id: id,
+                position: position,
                 timestamp: new Date().toISOString()
             });
             
             try {
+                // Crear un elemento canvas
+                const canvas = document.createElement('canvas');
+                qrcodeDiv.appendChild(canvas);
+                
                 // Generar QR
-                new QRCode(qrcodeDiv, {
-                    text: workerData,
+                QRCode.toCanvas(canvas, workerData, {
                     width: 200,
-                    height: 200
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function(error) {
+                    if (error) {
+                        console.error("Error al generar QR:", error);
+                        showStatus(registerStatus, 'Error al generar el código QR', 'error');
+                        generateQRBtn.disabled = false;
+                        generateQRBtn.innerHTML = 'Generar código QR';
+                        return;
+                    }
+                    
+                    // Guardar trabajador en Google Sheets
+                    saveWorkerToGoogleSheets(name, id, position, workerData);
                 });
-                
-                // Guardar trabajador
-                const worker = {
-                    name: name,
-                    id: id,
-                    qrData: workerData
-                };
-                
-                workers.push(worker);
-                localStorage.setItem('workers', JSON.stringify(workers));
-                
-                // Enviar datos a Google Sheets
-                sendToGoogleSheets(worker, 'register');
-                
-                alert("Trabajador registrado correctamente");
-                
-                // Limpiar campos
-                workerName.value = "";
-                workerId.value = "";
-                
-                // Actualizar lista de trabajadores
-                updateWorkerList();
                 
             } catch (error) {
                 console.error("Error al generar QR:", error);
-                alert("Error al generar el código QR");
+                showStatus(registerStatus, 'Error al generar el código QR', 'error');
+                generateQRBtn.disabled = false;
+                generateQRBtn.innerHTML = 'Generar código QR';
             }
+        }
+        
+        // Guardar trabajador en Google Sheets
+        function saveWorkerToGoogleSheets(name, id, position, qrData) {
+            const formData = new FormData();
+            formData.append('action', 'register');
+            formData.append('name', name);
+            formData.append('id', id);
+            formData.append('position', position);
+            formData.append('qrData', qrData);
+            formData.append('timestamp', new Date().toISOString());
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    // Guardar trabajador localmente
+                    const worker = {
+                        name: name,
+                        id: id,
+                        position: position,
+                        qrData: qrData,
+                        registeredAt: new Date().toISOString()
+                    };
+                    
+                    workers.push(worker);
+                    localStorage.setItem('workers', JSON.stringify(workers));
+                    
+                    showStatus(registerStatus, 'Trabajador registrado correctamente. Código QR generado.', 'success');
+                    
+                    // Limpiar campos
+                    workerName.value = "";
+                    workerId.value = "";
+                    workerPosition.value = "";
+                    
+                    // Actualizar lista de trabajadores
+                    updateWorkerList();
+                } else {
+                    showStatus(registerStatus, 'Error al guardar en Google Sheets: ' + data.message, 'error');
+                }
+                
+                generateQRBtn.disabled = false;
+                generateQRBtn.innerHTML = 'Generar código QR';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus(registerStatus, 'Error de conexión con Google Sheets', 'error');
+                generateQRBtn.disabled = false;
+                generateQRBtn.innerHTML = 'Generar código QR';
+            });
+        }
+        
+        // Obtener trabajadores desde Google Sheets
+        function fetchWorkersFromGoogleSheets() {
+            const formData = new FormData();
+            formData.append('action', 'getWorkers');
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success' && data.workers) {
+                    workers = data.workers;
+                    localStorage.setItem('workers', JSON.stringify(workers));
+                    updateWorkerList();
+                }
+            })
+            .catch(error => {
+                console.error('Error al obtener trabajadores:', error);
+            });
+        }
+        
+        // Obtener registros de asistencia desde Google Sheets
+        function fetchAttendanceFromGoogleSheets() {
+            const formData = new FormData();
+            formData.append('action', 'getAttendance');
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success' && data.attendance) {
+                    attendanceRecords = data.attendance;
+                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+                    updateAttendanceRecords();
+                }
+            })
+            .catch(error => {
+                console.error('Error al obtener registros de asistencia:', error);
+            });
         }
         
         // Iniciar escáner
         function startScanner() {
-            scannerContainer.classList.remove('hidden');
+            scannerContainer.style.display = 'block';
             startScanBtn.classList.add('hidden');
             stopScanBtn.classList.remove('hidden');
+            scanResult.innerHTML = "";
             
             // Solicitar acceso a la cámara
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
@@ -318,17 +567,16 @@
             })
             .catch(function(err) {
                 console.error("Error al acceder a la cámara: ", err);
-                alert("No se pudo acceder a la cámara");
+                showStatus(scanResult, 'No se pudo acceder a la cámara: ' + err.message, 'error');
             });
         }
         
         // Detener escáner
         function stopScanner() {
             isScanning = false;
-            scannerContainer.classList.add('hidden');
+            scannerContainer.style.display = 'none';
             startScanBtn.classList.remove('hidden');
             stopScanBtn.classList.add('hidden');
-            scanResult.innerHTML = "";
             
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
@@ -356,7 +604,7 @@
                         registerAttendance(workerData);
                     } catch (e) {
                         console.error("Error al procesar QR:", e);
-                        scanResult.innerHTML = "<p style='color: red;'>Código QR inválido</p>";
+                        showStatus(scanResult, 'Código QR inválido', 'error');
                     }
                 }
             }
@@ -376,49 +624,83 @@
                 const attendanceData = {
                     name: worker.name,
                     id: worker.id,
+                    position: worker.position,
                     timestamp: now.toISOString(),
-                    date: now.toLocaleDateString(),
-                    time: now.toLocaleTimeString()
+                    date: now.toLocaleDateString('es-ES'),
+                    time: now.toLocaleTimeString('es-ES')
                 };
                 
-                // Enviar a Google Sheets
-                sendToGoogleSheets(attendanceData, 'attendance');
-                
-                // Mostrar resultado
-                scanResult.innerHTML = `
-                    <p style='color: green; font-weight: bold;'>Asistencia registrada</p>
-                    <p>Nombre: ${worker.name}</p>
-                    <p>ID: ${worker.id}</p>
-                    <p>Hora: ${now.toLocaleTimeString()}</p>
-                `;
-                
-                // Detener escáner después de 3 segundos
-                setTimeout(stopScanner, 3000);
+                // Guardar registro de asistencia en Google Sheets
+                saveAttendanceToGoogleSheets(attendanceData);
             } else {
-                scanResult.innerHTML = "<p style='color: red;'>Trabajador no registrado</p>";
+                showStatus(scanResult, 'Trabajador no registrado', 'error');
             }
         }
         
-        // Enviar datos a Google Sheets
-        function sendToGoogleSheets(data, action) {
-            // Esta función enviará los datos a Google Sheets a través de Google Apps Script
-            // Debes reemplazar SHEET_URL con la URL de tu Web App de Google Apps Script
-            
+        // Guardar asistencia en Google Sheets
+        function saveAttendanceToGoogleSheets(attendanceData) {
             const formData = new FormData();
-            formData.append('action', action);
-            formData.append('data', JSON.stringify(data));
+            formData.append('action', 'attendance');
+            formData.append('name', attendanceData.name);
+            formData.append('id', attendanceData.id);
+            formData.append('position', attendanceData.position);
+            formData.append('timestamp', attendanceData.timestamp);
+            formData.append('date', attendanceData.date);
+            formData.append('time', attendanceData.time);
             
-            fetch(SHEET_URL, {
+            fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
-            .then(result => {
-                console.log('Datos enviados a Google Sheets:', result);
+            .then(data => {
+                if (data.result === 'success') {
+                    // Guardar registro localmente
+                    attendanceRecords.push(attendanceData);
+                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+                    
+                    // Mostrar resultado
+                    scanResult.innerHTML = `
+                        <div class="status-message success">
+                            <p><strong>Asistencia registrada</strong></p>
+                            <p>Nombre: ${attendanceData.name}</p>
+                            <p>ID: ${attendanceData.id}</p>
+                            <p>Cargo: ${attendanceData.position}</p>
+                            <p>Hora: ${attendanceData.time}</p>
+                        </div>
+                    `;
+                    
+                    // Detener escáner después de 3 segundos
+                    setTimeout(stopScanner, 3000);
+                } else {
+                    showStatus(scanResult, 'Error al registrar asistencia: ' + data.message, 'error');
+                }
             })
             .catch(error => {
-                console.error('Error al enviar a Google Sheets:', error);
+                console.error('Error:', error);
+                showStatus(scanResult, 'Error de conexión con Google Sheets', 'error');
             });
+        }
+        
+        // Login de administrador
+        function adminLogin() {
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                adminLoginSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                adminPassword.value = "";
+                updateWorkerList();
+                updateAttendanceRecords();
+            } else {
+                showStatus(loginStatus, 'Contraseña incorrecta', 'error');
+            }
+        }
+        
+        // Logout de administrador
+        function adminLogout() {
+            isAdminLoggedIn = false;
+            adminLoginSection.classList.remove('hidden');
+            adminSection.classList.add('hidden');
         }
         
         // Actualizar lista de trabajadores
@@ -435,9 +717,11 @@
                 workerItem.className = 'worker-item';
                 workerItem.innerHTML = `
                     <div>
-                        <strong>${worker.name}</strong> (ID: ${worker.id})
+                        <strong>${worker.name}</strong> 
+                        <div>ID: ${worker.id} - ${worker.position}</div>
+                        <small>Registrado: ${new Date(worker.registeredAt).toLocaleDateString('es-ES')}</small>
                     </div>
-                    <button class="danger" data-index="${index}">Eliminar</button>
+                    <button class="danger" data-id="${worker.id}">Eliminar</button>
                 `;
                 workerList.appendChild(workerItem);
             });
@@ -446,29 +730,86 @@
             const deleteButtons = workerList.querySelectorAll('button');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    deleteWorker(index);
+                    const id = this.getAttribute('data-id');
+                    deleteWorker(id);
                 });
             });
         }
         
-        // Eliminar trabajador
-        function deleteWorker(index) {
-            if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
-                const worker = workers[index];
-                
-                // Enviar a Google Sheets
-                sendToGoogleSheets(worker, 'delete');
-                
-                // Eliminar de la lista local
-                workers.splice(index, 1);
-                localStorage.setItem('workers', JSON.stringify(workers));
-                
-                // Actualizar lista
-                updateWorkerList();
-                
-                alert("Trabajador eliminado correctamente");
+        // Actualizar registros de asistencia
+        function updateAttendanceRecords() {
+            attendanceRecordsDiv.innerHTML = "";
+            
+            if (attendanceRecords.length === 0) {
+                attendanceRecordsDiv.innerHTML = "<p>No hay registros de asistencia</p>";
+                return;
             }
+            
+            // Ordenar registros por fecha (más reciente primero)
+            const sortedRecords = [...attendanceRecords].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            sortedRecords.forEach(record => {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'worker-item';
+                recordItem.innerHTML = `
+                    <div>
+                        <strong>${record.name}</strong> 
+                        <div>ID: ${record.id} - ${record.position}</div>
+                        <small>${record.date} - ${record.time}</small>
+                    </div>
+                `;
+                attendanceRecordsDiv.appendChild(recordItem);
+            });
+        }
+        
+        // Eliminar trabajador
+        function deleteWorker(id) {
+            if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id', id);
+                
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        // Eliminar de la lista local
+                        workers = workers.filter(worker => worker.id !== id);
+                        localStorage.setItem('workers', JSON.stringify(workers));
+                        
+                        // Eliminar registros de asistencia de este trabajador
+                        attendanceRecords = attendanceRecords.filter(record => record.id !== id);
+                        localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+                        
+                        // Actualizar lista
+                        updateWorkerList();
+                        updateAttendanceRecords();
+                        
+                        showStatus(adminSection, 'Trabajador eliminado correctamente', 'success');
+                    } else {
+                        showStatus(adminSection, 'Error al eliminar trabajador: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatus(adminSection, 'Error de conexión con Google Sheets', 'error');
+                });
+            }
+        }
+        
+        // Mostrar mensaje de estado
+        function showStatus(element, message, type) {
+            element.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            
+            // Limpiar mensaje después de 5 segundos
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
         }
         
         // Inicializar la aplicación
