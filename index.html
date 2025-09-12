@@ -15,39 +15,46 @@
         }
         
         body {
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            color: #333;
         }
         
         .container {
             background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 900px;
         }
         
         h1, h2, h3 {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #2c3e50;
+            text-align: center;
         }
         
         .section {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
             border-bottom: 1px solid #eee;
         }
         
         input, select, button {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
+            padding: 14px;
+            margin-bottom: 20px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
+        }
+        
+        input {
+            background-color: #f9f9f9;
         }
         
         button {
@@ -55,17 +62,19 @@
             color: white;
             border: none;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             font-weight: 600;
         }
         
         button:hover {
             background-color: #2980b9;
+            transform: translateY(-2px);
         }
         
         button:disabled {
             background-color: #95a5a6;
             cursor: not-allowed;
+            transform: none;
         }
         
         button.secondary {
@@ -92,13 +101,26 @@
             background-color: #27ae60;
         }
         
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .app-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+        
         #qrcode {
             margin: 20px 0;
             display: flex;
             justify-content: center;
             min-height: 220px;
-            border: 1px dashed #ddd;
-            padding: 10px;
+            border: 2px dashed #ddd;
+            padding: 15px;
+            border-radius: 8px;
             flex-direction: column;
             align-items: center;
         }
@@ -112,7 +134,7 @@
         
         #video {
             width: 100%;
-            border-radius: 5px;
+            border-radius: 8px;
             background-color: #000;
             max-height: 400px;
         }
@@ -140,8 +162,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 15px;
             border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        
+        .worker-item:hover {
+            background-color: #f9f9f9;
         }
         
         .admin-section {
@@ -158,15 +185,17 @@
             display: flex;
             margin-bottom: 20px;
             overflow-x: auto;
+            border-bottom: 1px solid #eee;
         }
         
         .tab {
-            padding: 10px 20px;
-            background-color: #e0e0e0;
+            padding: 12px 24px;
+            background-color: #f8f9fa;
             cursor: pointer;
-            border-radius: 5px 5px 0 0;
+            border-radius: 8px 8px 0 0;
             margin-right: 5px;
             white-space: nowrap;
+            transition: all 0.3s;
         }
         
         .tab.active {
@@ -183,67 +212,112 @@
         }
         
         .status-message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
             text-align: center;
         }
         
         .success {
             background-color: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
         
         .error {
             background-color: #f8d7da;
             color: #721c24;
+            border: 1px solid #f5c6cb;
         }
         
         .qr-history {
             margin-top: 15px;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
         }
         
         .qr-history-item {
             border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
+            background-color: #f9f9f9;
+            transition: transform 0.3s;
+        }
+        
+        .qr-history-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .qr-history-item img {
-            max-width: 100px;
+            max-width: 120px;
             height: auto;
+            margin-bottom: 10px;
         }
         
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .attendance-table th, .attendance-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
         
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
+        .attendance-table th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .attendance-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .attendance-table tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .download-btn {
+            padding: 8px 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .download-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .download-btn i {
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
             }
             
             input, select, button {
-                padding: 10px;
-                font-size: 14px;
+                padding: 12px;
             }
             
             .tab {
-                padding: 8px 12px;
+                padding: 10px 15px;
                 font-size: 14px;
             }
             
@@ -259,76 +333,139 @@
             .qr-history {
                 justify-content: center;
             }
+            
+            .attendance-table {
+                font-size: 14px;
+            }
+            
+            .attendance-table th, .attendance-table td {
+                padding: 8px 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .app-icon {
+                font-size: 50px;
+            }
+            
+            .tab-container {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin-bottom: 5px;
+                border-radius: 8px;
+            }
+            
+            .worker-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .worker-item button {
+                margin-top: 10px;
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Pantalla de Login -->
+    <div class="container" id="loginScreen">
+        <div class="login-container">
+            <div class="app-icon">📊</div>
+            <h1>Sistema de Asistencias</h1>
+            <div class="section">
+                <h2>Iniciar Sesión</h2>
+                <input type="text" id="username" placeholder="Usuario">
+                <input type="password" id="password" placeholder="Contraseña">
+                <button id="loginBtn">Ingresar al Sistema</button>
+                <div id="loginStatus"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aplicación Principal (oculta inicialmente) -->
+    <div class="container hidden" id="appScreen">
         <h1>Sistema de Registro de Asistencias</h1>
         
-        <!-- Sección de login general -->
-        <div class="section login-section" id="mainLoginSection">
-            <h2>Acceso al Sistema</h2>
-            <input type="password" id="mainPassword" placeholder="Contraseña de acceso">
-            <button id="mainLoginBtn">Iniciar sesión</button>
-            <div id="mainLoginStatus"></div>
+        <div class="tab-container">
+            <div class="tab active" data-tab="register">Registrar Trabajador</div>
+            <div class="tab" data-tab="attendance">Registrar Asistencia</div>
+            <div class="tab" data-tab="admin">Administrador</div>
+            <div class="tab" id="logoutTab">Cerrar Sesión</div>
         </div>
         
-        <!-- Contenido principal (oculto hasta login) -->
-        <div id="mainContent" class="hidden">
-            <div class="tab-container">
-                <div class="tab active" data-tab="register">Registrar</div>
-                <div class="tab" data-tab="attendance">Asistencia</div>
-                <div class="tab" data-tab="admin">Admin</div>
+        <!-- Sección para registrar trabajador -->
+        <div class="tab-content active" id="registerTab">
+            <div class="section">
+                <h2>Registrar Nuevo Trabajador</h2>
+                <input type="text" id="workerName" placeholder="Nombre del trabajador">
+                <input type="text" id="workerId" placeholder="ID del trabajador">
+                <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
+                <button id="generateQRBtn">Generar código QR</button>
+                <div id="qrcode">El código QR aparecerá aquí</div>
+                <div id="registerStatus"></div>
             </div>
-            
-            <!-- Sección para registrar trabajador -->
-            <div class="tab-content active" id="registerTab">
-                <div class="section">
-                    <h2>Registrar Nuevo Trabajador</h2>
-                    <input type="text" id="workerName" placeholder="Nombre del trabajador">
-                    <input type="text" id="workerId" placeholder="ID del trabajador">
-                    <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
-                    <button id="generateQRBtn">Generar código QR</button>
-                    <div id="qrcode">El código QR aparecerá aquí</div>
-                    <div id="registerStatus"></div>
-                    <div id="qrHistory" class="qr-history"></div>
+        </div>
+        
+        <!-- Sección para escanear QR -->
+        <div class="tab-content" id="attendanceTab">
+            <div class="section">
+                <h2>Registrar Asistencia</h2>
+                <button id="startScanBtn">Abrir cámara para escanear QR</button>
+                <div id="scanner-container">
+                    <video id="video" playsinline></video>
+                    <div id="scan-region"></div>
                 </div>
+                <button id="stopScanBtn" class="secondary hidden">Cerrar cámara</button>
+                <div id="scan-result"></div>
+            </div>
+        </div>
+        
+        <!-- Sección de administrador -->
+        <div class="tab-content" id="adminTab">
+            <div class="section login-section" id="adminLoginSection">
+                <h2>Acceso de Administrador</h2>
+                <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+                <button id="adminLoginBtn">Ingresar como Administrador</button>
+                <div id="adminLoginStatus"></div>
             </div>
             
-            <!-- Sección para escanear QR -->
-            <div class="tab-content" id="attendanceTab">
+            <div id="adminSection" class="admin-section hidden">
                 <div class="section">
-                    <h2>Registrar Asistencia</h2>
-                    <input type="password" id="attendancePassword" placeholder="Contraseña para registrar asistencia">
-                    <button id="startScanBtn">Abrir cámara para escanear QR</button>
-                    <div id="scanner-container">
-                        <video id="video" playsinline></video>
-                        <div id="scan-region"></div>
-                    </div>
-                    <button id="stopScanBtn" class="secondary hidden">Cerrar cámara</button>
-                    <div id="scan-result"></div>
+                    <h3>Gestión de Trabajadores</h3>
+                    <button id="refreshWorkersBtn">Actualizar lista</button>
+                    <div id="workerList" class="worker-list"></div>
                 </div>
-            </div>
-            
-            <!-- Sección de administrador -->
-            <div class="tab-content" id="adminTab">
+                
                 <div class="section">
-                    <h2>Panel de Administrador</h2>
-                    
-                    <div class="section">
-                        <h3>Gestión de Trabajadores</h3>
-                        <button id="refreshWorkersBtn">Actualizar lista</button>
-                        <div id="workerList" class="worker-list"></div>
+                    <h3>Registros de Asistencia</h3>
+                    <button id="refreshAttendanceBtn">Actualizar registros</button>
+                    <div id="attendanceRecords">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>ID</th>
+                                    <th>Cargo</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody">
+                                <!-- Los registros se insertarán aquí -->
+                            </tbody>
+                        </table>
                     </div>
-                    
-                    <div class="section">
-                        <h3>Registros de Asistencia</h3>
-                        <button id="refreshAttendanceBtn">Actualizar registros</button>
-                        <div id="attendanceRecords"></div>
-                    </div>
-                    
-                    <button id="logoutBtn" class="secondary">Cerrar sesión</button>
                 </div>
             </div>
         </div>
@@ -336,7 +473,9 @@
 
     <script>
         // Configuración
-        const ADMIN_PASSWORD = "admin123"; // Cambia esta contraseña en producción
+        const USERNAME = "admin";
+        const PASSWORD = "admin123";
+        const ADMIN_PASSWORD = "admin123";
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
         
         // Almacenamiento local
@@ -344,13 +483,16 @@
         let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
         let qrHistory = JSON.parse(localStorage.getItem('qrHistory')) || [];
         let isLoggedIn = false;
+        let isAdminLoggedIn = false;
         
         // Elementos del DOM
-        const mainLoginSection = document.getElementById('mainLoginSection');
-        const mainContent = document.getElementById('mainContent');
-        const mainPassword = document.getElementById('mainPassword');
-        const mainLoginBtn = document.getElementById('mainLoginBtn');
-        const mainLoginStatus = document.getElementById('mainLoginStatus');
+        const loginScreen = document.getElementById('loginScreen');
+        const appScreen = document.getElementById('appScreen');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginStatus = document.getElementById('loginStatus');
+        const logoutTab = document.getElementById('logoutTab');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
         const workerName = document.getElementById('workerName');
@@ -359,16 +501,18 @@
         const generateQRBtn = document.getElementById('generateQRBtn');
         const qrcodeDiv = document.getElementById('qrcode');
         const registerStatus = document.getElementById('registerStatus');
-        const qrHistoryDiv = document.getElementById('qrHistory');
-        const attendancePassword = document.getElementById('attendancePassword');
         const startScanBtn = document.getElementById('startScanBtn');
         const stopScanBtn = document.getElementById('stopScanBtn');
         const scannerContainer = document.getElementById('scanner-container');
         const video = document.getElementById('video');
         const scanResult = document.getElementById('scan-result');
-        const logoutBtn = document.getElementById('logoutBtn');
+        const adminLoginSection = document.getElementById('adminLoginSection');
+        const adminSection = document.getElementById('adminSection');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const adminLoginStatus = document.getElementById('adminLoginStatus');
         const workerList = document.getElementById('workerList');
-        const attendanceRecordsDiv = document.getElementById('attendanceRecords');
+        const attendanceTableBody = document.getElementById('attendanceTableBody');
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         
@@ -380,49 +524,66 @@
         
         // Inicializar
         function init() {
-            updateWorkerList();
-            updateAttendanceRecords();
-            updateQRHistory();
-            
             // Event listeners
-            mainLoginBtn.addEventListener('click', mainLogin);
+            loginBtn.addEventListener('click', login);
+            logoutTab.addEventListener('click', logout);
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    switchTab(tabId);
+                    if (tab.id !== 'logoutTab') {
+                        const tabId = tab.getAttribute('data-tab');
+                        switchTab(tabId);
+                    }
                 });
             });
             
             generateQRBtn.addEventListener('click', generateQRCode);
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
-            logoutBtn.addEventListener('click', logout);
+            adminLoginBtn.addEventListener('click', adminLogin);
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
             
             // Cargar datos iniciales
-            fetchWorkersFromGoogleSheets();
-            fetchAttendanceFromGoogleSheets();
+            updateWorkerList();
+            updateAttendanceTable();
         }
         
         // Login principal
-        function mainLogin() {
-            if (mainPassword.value === ADMIN_PASSWORD) {
+        function login() {
+            if (usernameInput.value === USERNAME && passwordInput.value === PASSWORD) {
                 isLoggedIn = true;
-                mainLoginSection.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                mainPassword.value = "";
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                usernameInput.value = "";
+                passwordInput.value = "";
             } else {
-                showStatus(mainLoginStatus, 'Contraseña incorrecta', 'error');
+                showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
             }
         }
         
         // Logout
         function logout() {
             isLoggedIn = false;
-            mainLoginSection.classList.remove('hidden');
-            mainContent.classList.add('hidden');
+            isAdminLoggedIn = false;
+            loginScreen.classList.remove('hidden');
+            appScreen.classList.add('hidden');
+            adminLoginSection.classList.remove('hidden');
+            adminSection.classList.add('hidden');
             stopScanner();
+        }
+        
+        // Login de administrador
+        function adminLogin() {
+            if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                adminLoginSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                adminPasswordInput.value = "";
+                updateWorkerList();
+                updateAttendanceTable();
+            } else {
+                showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
+            }
         }
         
         // Cambiar pestaña
@@ -451,11 +612,6 @@
         
         // Generar código QR
         function generateQRCode() {
-            if (!isLoggedIn) {
-                showStatus(registerStatus, 'Debe iniciar sesión primero', 'error');
-                return;
-            }
-            
             const name = workerName.value.trim();
             const id = workerId.value.trim();
             const position = workerPosition.value.trim();
@@ -572,9 +728,8 @@
                     workerId.value = "";
                     workerPosition.value = "";
                     
-                    // Actualizar lista de trabajadores e historial
+                    // Actualizar lista de trabajadores
                     updateWorkerList();
-                    updateQRHistory();
                 } else {
                     showStatus(registerStatus, 'Error al guardar en Google Sheets: ' + data.message, 'error');
                 }
@@ -588,45 +743,6 @@
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = 'Generar código QR';
             });
-        }
-        
-        // Actualizar historial de QR
-        function updateQRHistory() {
-            qrHistoryDiv.innerHTML = "";
-            
-            if (qrHistory.length === 0) {
-                qrHistoryDiv.innerHTML = "<p>No hay códigos QR generados recientemente</p>";
-                return;
-            }
-            
-            qrHistory.forEach((item, index) => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'qr-history-item';
-                historyItem.innerHTML = `
-                    <img src="${item.qrImageData}" alt="QR de ${item.name}">
-                    <div><strong>${item.name}</strong></div>
-                    <div>${item.id}</div>
-                    <small>${new Date(item.generatedAt).toLocaleDateString('es-ES')}</small>
-                    <button class="success" data-index="${index}">Reutilizar</button>
-                `;
-                qrHistoryDiv.appendChild(historyItem);
-            });
-            
-            // Agregar event listeners a los botones de reutilizar
-            const reuseButtons = qrHistoryDiv.querySelectorAll('button');
-            reuseButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    reuseQRCode(index);
-                });
-            });
-        }
-        
-        // Reutilizar código QR del historial
-        function reuseQRCode(index) {
-            const item = qrHistory[index];
-            qrcodeDiv.innerHTML = `<img src="${item.qrImageData}" alt="QR de ${item.name}">`;
-            showStatus(registerStatus, `Código QR de ${item.name} cargado desde el historial`, 'success');
         }
         
         // Obtener trabajadores desde Google Sheets
@@ -665,7 +781,7 @@
                 if (data.result === 'success' && data.attendance) {
                     attendanceRecords = data.attendance;
                     localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                    updateAttendanceRecords();
+                    updateAttendanceTable();
                 }
             })
             .catch(error => {
@@ -675,16 +791,6 @@
         
         // Iniciar escáner
         function startScanner() {
-            if (!isLoggedIn) {
-                showStatus(scanResult, 'Debe iniciar sesión primero', 'error');
-                return;
-            }
-            
-            if (attendancePassword.value !== ADMIN_PASSWORD) {
-                showStatus(scanResult, 'Contraseña incorrecta para registrar asistencia', 'error');
-                return;
-            }
-            
             scannerContainer.style.display = 'block';
             startScanBtn.classList.add('hidden');
             stopScanBtn.classList.remove('hidden');
@@ -725,7 +831,7 @@
             }
         }
         
-        // Escanear código QR - CON PROTECCIÓN MEJORADA CONTRA MÚLTIPLES LECTURAS
+        // Escanear código QR
         function scanQRCode() {
             if (!isScanning) return;
             
@@ -832,11 +938,8 @@
                         </div>
                     `;
                     
-                    // Actualizar registros de asistencia
-                    updateAttendanceRecords();
-                    
-                    // Limpiar contraseña
-                    attendancePassword.value = "";
+                    // Actualizar tabla de asistencias
+                    updateAttendanceTable();
                 } else {
                     showStatus(scanResult, 'Error al registrar asistencia: ' + data.message, 'error');
                     
@@ -877,13 +980,24 @@
                         <div>ID: ${worker.id} - ${worker.position}</div>
                         <small>Registrado: ${new Date(worker.registeredAt).toLocaleDateString('es-ES')}</small>
                     </div>
-                    <button class="danger" data-id="${worker.id}">Eliminar</button>
+                    <div>
+                        <button class="download-btn" data-id="${worker.id}">Descargar QR</button>
+                        <button class="danger" data-id="${worker.id}">Eliminar</button>
+                    </div>
                 `;
                 workerList.appendChild(workerItem);
             });
             
-            // Agregar event listeners a los botones de eliminar
-            const deleteButtons = workerList.querySelectorAll('button');
+            // Agregar event listeners a los botones
+            const downloadButtons = workerList.querySelectorAll('.download-btn');
+            downloadButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    downloadQRCode(id);
+                });
+            });
+            
+            const deleteButtons = workerList.querySelectorAll('.danger');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
@@ -892,12 +1006,23 @@
             });
         }
         
-        // Actualizar registros de asistencia
-        function updateAttendanceRecords() {
-            attendanceRecordsDiv.innerHTML = "";
+        // Descargar código QR
+        function downloadQRCode(id) {
+            const worker = workers.find(w => w.id === id);
+            if (worker && worker.qrImageData) {
+                const link = document.createElement('a');
+                link.href = worker.qrImageData;
+                link.download = `QR_${worker.name}_${worker.id}.png`;
+                link.click();
+            }
+        }
+        
+        // Actualizar tabla de asistencias
+        function updateAttendanceTable() {
+            attendanceTableBody.innerHTML = "";
             
             if (attendanceRecords.length === 0) {
-                attendanceRecordsDiv.innerHTML = "<p>No hay registros de asistencia</p>";
+                attendanceTableBody.innerHTML = "<tr><td colspan='5' style='text-align: center;'>No hay registros de asistencia</td></tr>";
                 return;
             }
             
@@ -907,16 +1032,15 @@
             );
             
             sortedRecords.forEach(record => {
-                const recordItem = document.createElement('div');
-                recordItem.className = 'worker-item';
-                recordItem.innerHTML = `
-                    <div>
-                        <strong>${record.name}</strong> 
-                        <div>ID: ${record.id} - ${record.position}</div>
-                        <small>${record.date} - ${record.time}</small>
-                    </div>
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.name}</td>
+                    <td>${record.id}</td>
+                    <td>${record.position}</td>
+                    <td>${record.date}</td>
+                    <td>${record.time}</td>
                 `;
-                attendanceRecordsDiv.appendChild(recordItem);
+                attendanceTableBody.appendChild(row);
             });
         }
         
@@ -944,7 +1068,7 @@
                         
                         // Actualizar lista
                         updateWorkerList();
-                        updateAttendanceRecords();
+                        updateAttendanceTable();
                         
                         showStatus(workerList, 'Trabajador eliminado correctamente', 'success');
                     } else {
