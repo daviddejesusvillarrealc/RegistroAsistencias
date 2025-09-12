@@ -300,7 +300,7 @@
     <script>
         // Configuración
         const ADMIN_PASSWORD = "admin123"; // Cambia esta contraseña en producción
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxX_bcvpu7iU5atU0Zlz7Rl9u9mKVdJa6-bbQe7AzSj09Zmt4qfrJyXr37EYIFwKyTuQw/exec";
         
         // Almacenamiento local (como respaldo)
         let workers = JSON.parse(localStorage.getItem('workers')) || [];
@@ -337,6 +337,7 @@
         let videoStream = null;
         let lastScannedId = null;
         let scanCooldown = false;
+        let scanAnimationFrame = null;
         
         // Inicializar
         function init() {
@@ -583,13 +584,19 @@
             startScanBtn.classList.remove('hidden');
             stopScanBtn.classList.add('hidden');
             
+            // Cancelar el animation frame si existe
+            if (scanAnimationFrame) {
+                cancelAnimationFrame(scanAnimationFrame);
+                scanAnimationFrame = null;
+            }
+            
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
             }
         }
         
-        // Escanear código QR - CON PROTECCIÓN CONTRA MÚLTIPLES LECTURAS
+        // Escanear código QR - CON PROTECCIÓN CONTRA MÚLTIPLES LECTURAS MEJORADA
         function scanQRCode() {
             if (!isScanning) return;
             
@@ -607,17 +614,15 @@
                     try {
                         const workerData = JSON.parse(code.data);
                         
-                        // Evitar múltiples lecturas del mismo código
+                        // Verificar si es un código nuevo (no el mismo que el anterior)
                         if (lastScannedId !== workerData.id) {
                             lastScannedId = workerData.id;
                             scanCooldown = true;
                             
-                            // Activar enfriamiento para evitar múltiples lecturas
-                            setTimeout(() => {
-                                scanCooldown = false;
-                                lastScannedId = null;
-                            }, 3000); // 3 segundos de enfriamiento
+                            // Detener el escaneo inmediatamente después de detectar un código válido
+                            stopScanner();
                             
+                            // Procesar el código
                             registerAttendance(workerData);
                         }
                     } catch (e) {
@@ -627,8 +632,9 @@
                 }
             }
             
+            // Continuar escaneo solo si aún está activo
             if (isScanning) {
-                requestAnimationFrame(scanQRCode);
+                scanAnimationFrame = requestAnimationFrame(scanQRCode);
             }
         }
         
@@ -652,6 +658,12 @@
                 saveAttendanceToGoogleSheets(attendanceData);
             } else {
                 showStatus(scanResult, 'Trabajador no registrado', 'error');
+                // Reactivar el escáner después de un error
+                setTimeout(() => {
+                    scanCooldown = false;
+                    lastScannedId = null;
+                    startScanner();
+                }, 2000);
             }
         }
         
@@ -688,8 +700,8 @@
                         </div>
                     `;
                     
-                    // Detener escáner después de 3 segundos
-                    setTimeout(stopScanner, 3000);
+                    // Actualizar registros de asistencia
+                    updateAttendanceRecords();
                 } else {
                     showStatus(scanResult, 'Error al registrar asistencia: ' + data.message, 'error');
                 }
