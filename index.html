@@ -89,6 +89,8 @@
             display: flex;
             justify-content: center;
             min-height: 220px;
+            border: 1px dashed #ddd;
+            padding: 10px;
         }
         
         #scanner-container {
@@ -245,7 +247,7 @@
                 <input type="text" id="workerId" placeholder="ID del trabajador">
                 <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
                 <button id="generateQRBtn">Generar código QR</button>
-                <div id="qrcode"></div>
+                <div id="qrcode">El código QR aparecerá aquí</div>
                 <div id="registerStatus"></div>
             </div>
         </div>
@@ -333,7 +335,6 @@
         // Variables globales
         let isScanning = false;
         let videoStream = null;
-        let currentQRCode = null;
         
         // Inicializar
         function init() {
@@ -392,7 +393,7 @@
             }
         }
         
-        // Generar código QR
+        // Generar código QR - VERSIÓN CORREGIDA
         function generateQRCode() {
             const name = workerName.value.trim();
             const id = workerId.value.trim();
@@ -419,11 +420,11 @@
             });
             
             try {
-                // Crear un elemento canvas
+                // SOLUCIÓN: Usar QRCode.toCanvas con un canvas existente
                 const canvas = document.createElement('canvas');
                 qrcodeDiv.appendChild(canvas);
                 
-                // Generar QR
+                // Usar la API correcta de QRCode
                 QRCode.toCanvas(canvas, workerData, {
                     width: 200,
                     margin: 1,
@@ -434,7 +435,7 @@
                 }, function(error) {
                     if (error) {
                         console.error("Error al generar QR:", error);
-                        showStatus(registerStatus, 'Error al generar el código QR', 'error');
+                        showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
                         generateQRBtn.disabled = false;
                         generateQRBtn.innerHTML = 'Generar código QR';
                         return;
@@ -446,7 +447,7 @@
                 
             } catch (error) {
                 console.error("Error al generar QR:", error);
-                showStatus(registerStatus, 'Error al generar el código QR', 'error');
+                showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = 'Generar código QR';
             }
