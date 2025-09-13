@@ -1088,9 +1088,14 @@
         // Eliminar trabajador
         function deleteWorker(id) {
             if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
+                const worker = workers.find(w => w.id === id);
+                if (!worker) return;
+                
                 const formData = new FormData();
                 formData.append('action', 'delete');
                 formData.append('id', id);
+                formData.append('name', worker.name);
+                formData.append('position', worker.position);
                 
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
