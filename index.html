@@ -6,6 +6,7 @@
     <title>Sistema de Asistencias con QR</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -679,10 +680,7 @@
                     downloadBtn.textContent = 'Descargar QR';
                     downloadBtn.className = 'download-btn';
                     downloadBtn.onclick = function() {
-                        const link = document.createElement('a');
-                        link.href = qrImageData;
-                        link.download = `QR_${name}_${id}.png`;
-                        link.click();
+                        downloadQRCodeFromCanvas(canvas, name, id);
                     };
                     
                     qrcodeDiv.appendChild(downloadBtn);
@@ -696,6 +694,31 @@
                 showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = 'Generar código QR';
+            }
+        }
+        
+        // Función mejorada para descargar QR desde canvas (compatible con móviles)
+        function downloadQRCodeFromCanvas(canvas, name, id) {
+            try {
+                canvas.toBlob(function(blob) {
+                    try {
+                        // Usar FileSaver.js para una descarga más compatible
+                        saveAs(blob, `QR_${name}_${id}.png`);
+                    } catch (e) {
+                        console.error("Error con FileSaver:", e);
+                        // Fallback para navegadores que no soportan FileSaver
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const link = document.createElement('a');
+                        link.href = dataUrl;
+                        link.download = `QR_${name}_${id}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                });
+            } catch (error) {
+                console.error("Error al descargar QR:", error);
+                showStatus(registerStatus, 'Error al descargar el código QR', 'error');
             }
         }
         
@@ -1015,7 +1038,7 @@
                         <small>Registrado: ${new Date(worker.registeredAt).toLocaleDateString('es-ES')}</small>
                     </div>
                     <div class="action-buttons">
-                        <button class="download-btn" data-id="${worker.id}">Descargar QR</button>
+                        <button class="download-btn" data-id="${worker.id}" data-name="${worker.name}">Descargar QR</button>
                         <button class="danger" data-id="${worker.id}">Eliminar</button>
                     </div>
                 `;
@@ -1027,7 +1050,8 @@
             downloadButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
-                    downloadQRCode(id);
+                    const name = this.getAttribute('data-name');
+                    downloadQRCode(id, name);
                 });
             });
             
@@ -1040,14 +1064,46 @@
             });
         }
         
-        // Descargar código QR
-        function downloadQRCode(id) {
+        // Descargar código QR - FUNCIÓN MEJORADA
+        function downloadQRCode(id, name) {
             const worker = workers.find(w => w.id === id);
             if (worker && worker.qrImageData) {
-                const link = document.createElement('a');
-                link.href = worker.qrImageData;
-                link.download = `QR_${worker.name}_${worker.id}.png`;
-                link.click();
+                try {
+                    // Crear un elemento canvas para regenerar el QR
+                    const canvas = document.createElement('canvas');
+                    
+                    // Crear una imagen a partir de los datos base64
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Usar la función mejorada de descarga
+                        downloadQRCodeFromCanvas(canvas, worker.name, worker.id);
+                    };
+                    
+                    img.onerror = function() {
+                        // Fallback: intentar descargar directamente
+                        try {
+                            const link = document.createElement('a');
+                            link.href = worker.qrImageData;
+                            link.download = `QR_${worker.name}_${worker.id}.png`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } catch (error) {
+                            console.error("Error al descargar QR:", error);
+                            showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                        }
+                    };
+                    
+                    img.src = worker.qrImageData;
+                } catch (error) {
+                    console.error("Error al procesar imagen QR:", error);
+                    showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                }
             } else {
                 showStatus(workerList, 'No se puede descargar el QR. Intente actualizar la lista.', 'error');
             }
@@ -1128,4 +1184,3 @@
     </script>
 </body>
 </html>
-
