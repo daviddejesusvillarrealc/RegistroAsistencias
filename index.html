@@ -117,12 +117,13 @@
             margin: 20px 0;
             display: flex;
             justify-content: center;
-            min-height: 220px;
+            min-height: 250px;
             border: 2px dashed #ddd;
             padding: 15px;
             border-radius: 8px;
             flex-direction: column;
             align-items: center;
+            background-color: #f9f9f9;
         }
         
         #scanner-container {
@@ -322,11 +323,11 @@
             }
             
             #qrcode {
-                min-height: 180px;
+                min-height: 200px;
             }
             
             #qrcode canvas {
-                max-width: 180px;
+                max-width: 200px;
                 height: auto;
             }
             
@@ -610,7 +611,7 @@
             }
         }
         
-        // Generar código QR
+        // Generar código QR - VERSIÓN CORREGIDA
         function generateQRCode() {
             const name = workerName.value.trim();
             const id = workerId.value.trim();
@@ -628,12 +629,12 @@
             // Limpiar QR anterior
             qrcodeDiv.innerHTML = "Generando código QR...";
             
-            // Crear datos para el QR
+            // Crear datos para el QR - FORMATO SIMPLIFICADO
             const workerData = JSON.stringify({
-                name: name,
-                id: id,
-                position: position,
-                timestamp: new Date().toISOString()
+                n: name,  // Nombre abreviado para reducir tamaño
+                i: id,    // ID abreviado
+                p: position, // Posición abreviada
+                t: new Date().getTime() // Timestamp
             });
             
             try {
@@ -642,14 +643,15 @@
                 qrcodeDiv.innerHTML = "";
                 qrcodeDiv.appendChild(canvas);
                 
-                // Generar QR
+                // Generar QR con configuración optimizada
                 QRCode.toCanvas(canvas, workerData, {
-                    width: 200,
-                    margin: 1,
+                    width: 280, // Tamaño aumentado para mejor legibilidad
+                    margin: 2,
                     color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
+                        dark: '#000000', // Negro puro para mejor contraste
+                        light: '#FFFFFF' // Fondo blanco
+                    },
+                    errorCorrectionLevel: 'H' // Alto nivel de corrección de errores
                 }, function(error) {
                     if (error) {
                         console.error("Error al generar QR:", error);
@@ -798,10 +800,17 @@
             scanCooldown = false;
             
             // Solicitar acceso a la cámara
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            })
             .then(function(stream) {
                 videoStream = stream;
                 video.srcObject = stream;
+                video.setAttribute('playsinline', true); // Importante para iOS
                 video.play();
                 isScanning = true;
                 scanQRCode();
@@ -831,22 +840,31 @@
             }
         }
         
-        // Escanear código QR
+        // Escanear código QR - CON MEJORAS PARA COMPATIBILIDAD
         function scanQRCode() {
             if (!isScanning) return;
             
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 const canvas = document.createElement('canvas');
+                // Ajustar el tamaño del canvas para mejorar la detección
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const context = canvas.getContext('2d');
+                
+                // Dibujar el video en el canvas
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
+                // Obtener los datos de la imagen
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                // Intentar detectar el código QR
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert', // Intentar sin invertir primero
+                });
                 
                 if (code && !scanCooldown) {
                     try {
+                        // Procesar el código QR
                         const workerData = JSON.parse(code.data);
                         
                         // Activar enfriamiento para evitar múltiples lecturas
@@ -858,8 +876,28 @@
                         // Procesar el código
                         registerAttendance(workerData);
                     } catch (e) {
-                        console.error("Error al procesar QR:", e);
-                        showStatus(scanResult, 'Código QR inválido', 'error');
+                        console.error("Error al procesar QR:", e, "Contenido:", code.data);
+                        
+                        // Intentar con formato alternativo si el JSON falla
+                        try {
+                            // Si el JSON falla, intentar interpretar como texto plano
+                            const content = code.data;
+                            if (content.includes('|')) {
+                                // Formato alternativo: nombre|id|cargo
+                                const parts = content.split('|');
+                                const workerData = {
+                                    n: parts[0],
+                                    i: parts[1],
+                                    p: parts[2]
+                                };
+                                registerAttendance(workerData);
+                                return;
+                            }
+                        } catch (e2) {
+                            console.error("Error con formato alternativo:", e2);
+                        }
+                        
+                        showStatus(scanResult, 'Código QR inválido: ' + e.message, 'error');
                         
                         // Reactivar el escáner después de un error
                         setTimeout(() => {
@@ -878,8 +916,11 @@
         
         // Registrar asistencia
         function registerAttendance(workerData) {
-            // Buscar trabajador
-            const worker = workers.find(w => w.id === workerData.id);
+            // Buscar trabajador - compatibilidad con formato nuevo y antiguo
+            const worker = workers.find(w => 
+                w.id === workerData.i || // Nuevo formato (abreviado)
+                w.id === workerData.id   // Formato antiguo
+            );
             
             if (worker) {
                 const now = new Date();
