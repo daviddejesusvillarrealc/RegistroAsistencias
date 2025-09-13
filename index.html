@@ -943,14 +943,19 @@
             );
             
             if (worker) {
+                // Obtener fecha y hora actual en la zona horaria de Caracas (UTC-4)
                 const now = new Date();
+                // Ajustar a UTC-4 (Caracas)
+                const caracasOffset = -4 * 60; // UTC-4 en minutos
+                now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + caracasOffset);
+                
                 const attendanceData = {
                     name: worker.name,
                     id: worker.id,
                     position: worker.position,
                     timestamp: now.toISOString(),
-                    date: now.toLocaleDateString('es-ES'),
-                    time: now.toLocaleTimeString('es-ES')
+                    date: now.toLocaleDateString('es-VE'),
+                    time: now.toLocaleTimeString('es-VE')
                 };
                 
                 // Guardar registro de asistencia en Google Sheets
@@ -1031,11 +1036,23 @@
             workers.forEach((worker, index) => {
                 const workerItem = document.createElement('div');
                 workerItem.className = 'worker-item';
+                
+                // Formatear fecha de registro
+                let registeredDate = 'Fecha desconocida';
+                if (worker.registeredAt) {
+                    try {
+                        const date = new Date(worker.registeredAt);
+                        registeredDate = date.toLocaleDateString('es-VE');
+                    } catch (e) {
+                        console.error("Error al formatear fecha:", e);
+                    }
+                }
+                
                 workerItem.innerHTML = `
                     <div>
                         <strong>${worker.name}</strong> 
                         <div>ID: ${worker.id} - ${worker.position}</div>
-                        <small>Registrado: ${new Date(worker.registeredAt).toLocaleDateString('es-ES')}</small>
+                        <small>Registrado: ${registeredDate}</small>
                     </div>
                     <div class="action-buttons">
                         <button class="download-btn" data-id="${worker.id}" data-name="${worker.name}">Descargar QR</button>
@@ -1069,39 +1086,15 @@
             const worker = workers.find(w => w.id === id);
             if (worker && worker.qrImageData) {
                 try {
-                    // Crear un elemento canvas para regenerar el QR
-                    const canvas = document.createElement('canvas');
-                    
-                    // Crear una imagen a partir de los datos base64
-                    const img = new Image();
-                    img.onload = function() {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        
-                        // Usar la función mejorada de descarga
-                        downloadQRCodeFromCanvas(canvas, worker.name, worker.id);
-                    };
-                    
-                    img.onerror = function() {
-                        // Fallback: intentar descargar directamente
-                        try {
-                            const link = document.createElement('a');
-                            link.href = worker.qrImageData;
-                            link.download = `QR_${worker.name}_${worker.id}.png`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        } catch (error) {
-                            console.error("Error al descargar QR:", error);
-                            showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
-                        }
-                    };
-                    
-                    img.src = worker.qrImageData;
+                    // Usar el método directo con los datos base64
+                    const link = document.createElement('a');
+                    link.href = worker.qrImageData;
+                    link.download = `QR_${worker.name}_${worker.id}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 } catch (error) {
-                    console.error("Error al procesar imagen QR:", error);
+                    console.error("Error al descargar QR:", error);
                     showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
                 }
             } else {
@@ -1119,18 +1112,42 @@
             }
             
             // Ordenar registros por fecha (más reciente primero)
-            const sortedRecords = [...attendanceRecords].sort((a, b) => 
-                new Date(b.timestamp) - new Date(a.timestamp)
-            );
+            const sortedRecords = [...attendanceRecords].sort((a, b) => {
+                try {
+                    return new Date(b.timestamp || b.registerTime) - new Date(a.timestamp || a.registerTime);
+                } catch (e) {
+                    return 0;
+                }
+            });
             
             sortedRecords.forEach(record => {
                 const row = document.createElement('tr');
+                
+                // Formatear fecha y hora correctamente
+                let fecha = record.date || 'Fecha no disponible';
+                let hora = record.time || 'Hora no disponible';
+                
+                // Si tenemos un timestamp, usarlo para formatear correctamente
+                if (record.timestamp) {
+                    try {
+                        const date = new Date(record.timestamp);
+                        // Ajustar a la zona horaria de Caracas (UTC-4)
+                        const caracasOffset = -4 * 60; // UTC-4 en minutos
+                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset() + caracasOffset);
+                        
+                        fecha = date.toLocaleDateString('es-VE');
+                        hora = date.toLocaleTimeString('es-VE');
+                    } catch (e) {
+                        console.error("Error al formatear fecha/hora:", e);
+                    }
+                }
+                
                 row.innerHTML = `
                     <td>${record.name}</td>
                     <td>${record.id}</td>
                     <td>${record.position}</td>
-                    <td>${record.date}</td>
-                    <td>${record.time}</td>
+                    <td>${fecha}</td>
+                    <td>${hora}</td>
                 `;
                 attendanceTableBody.appendChild(row);
             });
@@ -1140,13 +1157,14 @@
         function deleteWorker(id) {
             if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
                 const worker = workers.find(w => w.id === id);
-                if (!worker) return;
+                if (!worker) {
+                    showStatus(workerList, 'Trabajador no encontrado', 'error');
+                    return;
+                }
                 
                 const formData = new FormData();
                 formData.append('action', 'delete');
                 formData.append('id', id);
-                formData.append('name', worker.name);
-                formData.append('position', worker.position);
                 
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
