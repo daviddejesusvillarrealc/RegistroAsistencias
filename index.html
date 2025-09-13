@@ -7,7 +7,391 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        /* Estilos anteriores... */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        input {
+            background-color: #f9f9f9;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        button.secondary {
+            background-color: #7f8c8d;
+        }
+        
+        button.secondary:hover {
+            background-color: #636e70;
+        }
+        
+        button.danger {
+            background-color: #e74c3c;
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        button.success {
+            background-color: #2ecc71;
+        }
+        
+        button.success:hover {
+            background-color: #27ae60;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .app-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+        
+        #qrcode {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            min-height: 250px;
+            border: 2px dashed #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f9f9f9;
+        }
+        
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        #video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+            max-height: 400px;
+        }
+        
+        #scan-region {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 200px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .worker-list {
+            margin-top: 20px;
+        }
+        
+        .worker-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        
+        .worker-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .admin-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .login-section {
+            margin-bottom: 20px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status-message {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .qr-history {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .qr-history-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #f9f9f9;
+            transition: transform 0.3s;
+        }
+        
+        .qr-history-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .qr-history-item img {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .attendance-table th, .attendance-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .attendance-table th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .attendance-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .attendance-table tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .download-btn {
+            padding: 8px 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+        }
+        
+        .download-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .download-btn i {
+            margin-right: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            input, select, button {
+                padding: 12px;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            #qrcode {
+                min-height: 200px;
+            }
+            
+            #qrcode canvas {
+                max-width: 200px;
+                height: auto;
+            }
+            
+            .qr-history {
+                justify-content: center;
+            }
+            
+            .attendance-table {
+                font-size: 14px;
+            }
+            
+            .attendance-table th, .attendance-table td {
+                padding: 8px 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .app-icon {
+                font-size: 50px;
+            }
+            
+            .tab-container {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin-bottom: 5px;
+                border-radius: 8px;
+            }
+            
+            .worker-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .worker-item .action-buttons {
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -105,7 +489,7 @@
         const USERNAME = "admin";
         const PASSWORD = "admin123";
         const ADMIN_PASSWORD = "admin123";
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpGxonYuMkVYXfeMIqLDf41ovQzi1a3pYoPCX1mHBCjG0--cHznkPo1fte3Z2sBvfKeA/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
         
         // Variables globales
         let workers = [];
@@ -116,6 +500,7 @@
         let videoStream = null;
         let scanAnimationFrame = null;
         let scanCooldown = false;
+        let currentQRCode = null;
         
         // Elementos del DOM
         const loginScreen = document.getElementById('loginScreen');
@@ -294,7 +679,10 @@
                     downloadBtn.textContent = 'Descargar QR';
                     downloadBtn.className = 'download-btn';
                     downloadBtn.onclick = function() {
-                        downloadQRImage(qrImageData, name, id);
+                        const link = document.createElement('a');
+                        link.href = qrImageData;
+                        link.download = `QR_${name}_${id}.png`;
+                        link.click();
                     };
                     
                     qrcodeDiv.appendChild(downloadBtn);
@@ -308,24 +696,6 @@
                 showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = 'Generar código QR';
-            }
-        }
-        
-        // Función para descargar la imagen del QR
-        function downloadQRImage(qrImageData, name, id) {
-            try {
-                // Crear un enlace temporal
-                const link = document.createElement('a');
-                link.href = qrImageData;
-                link.download = `QR_${name}_${id}.png`;
-                
-                // Simular clic en el enlace
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (error) {
-                console.error("Error al descargar QR:", error);
-                showStatus(registerStatus, 'Error al descargar el código QR', 'error');
             }
         }
         
@@ -674,7 +1044,10 @@
         function downloadQRCode(id) {
             const worker = workers.find(w => w.id === id);
             if (worker && worker.qrImageData) {
-                downloadQRImage(worker.qrImageData, worker.name, worker.id);
+                const link = document.createElement('a');
+                link.href = worker.qrImageData;
+                link.download = `QR_${worker.name}_${worker.id}.png`;
+                link.click();
             } else {
                 showStatus(workerList, 'No se puede descargar el QR. Intente actualizar la lista.', 'error');
             }
@@ -755,4 +1128,3 @@
     </script>
 </body>
 </html>
-
