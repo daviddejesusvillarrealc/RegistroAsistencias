@@ -479,12 +479,15 @@
         const ADMIN_PASSWORD = "admin123";
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK0cWtGmOkXpHBNB-Mue-6vt2gVcYo_v3Rp9HOZj4Oun-9jnx0gLQ6VcbR4QXFYu_xUA/exec";
         
-        // Almacenamiento local
-        let workers = JSON.parse(localStorage.getItem('workers')) || [];
-        let attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
-        let qrHistory = JSON.parse(localStorage.getItem('qrHistory')) || [];
+        // Variables globales
+        let workers = [];
+        let attendanceRecords = [];
         let isLoggedIn = false;
         let isAdminLoggedIn = false;
+        let isScanning = false;
+        let videoStream = null;
+        let scanAnimationFrame = null;
+        let scanCooldown = false;
         
         // Elementos del DOM
         const loginScreen = document.getElementById('loginScreen');
@@ -517,12 +520,6 @@
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         
-        // Variables globales
-        let isScanning = false;
-        let videoStream = null;
-        let scanAnimationFrame = null;
-        let scanCooldown = false;
-        
         // Inicializar
         function init() {
             // Event listeners
@@ -544,9 +541,9 @@
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
             
-            // Cargar datos iniciales
-            updateWorkerList();
-            updateAttendanceTable();
+            // Cargar datos iniciales desde Google Sheets
+            fetchWorkersFromGoogleSheets();
+            fetchAttendanceFromGoogleSheets();
         }
         
         // Login principal
@@ -611,7 +608,7 @@
             }
         }
         
-        // Generar código QR - VERSIÓN CORREGIDA
+        // Generar código QR
         function generateQRCode() {
             const name = workerName.value.trim();
             const id = workerId.value.trim();
@@ -629,12 +626,12 @@
             // Limpiar QR anterior
             qrcodeDiv.innerHTML = "Generando código QR...";
             
-            // Crear datos para el QR - FORMATO SIMPLIFICADO
+            // Crear datos para el QR
             const workerData = JSON.stringify({
-                n: name,  // Nombre abreviado para reducir tamaño
-                i: id,    // ID abreviado
-                p: position, // Posición abreviada
-                t: new Date().getTime() // Timestamp
+                name: name,
+                id: id,
+                position: position,
+                timestamp: new Date().toISOString()
             });
             
             try {
@@ -645,13 +642,13 @@
                 
                 // Generar QR con configuración optimizada
                 QRCode.toCanvas(canvas, workerData, {
-                    width: 280, // Tamaño aumentado para mejor legibilidad
+                    width: 280,
                     margin: 2,
                     color: {
-                        dark: '#000000', // Negro puro para mejor contraste
-                        light: '#FFFFFF' // Fondo blanco
+                        dark: '#000000',
+                        light: '#FFFFFF'
                     },
-                    errorCorrectionLevel: 'H' // Alto nivel de corrección de errores
+                    errorCorrectionLevel: 'H'
                 }, function(error) {
                     if (error) {
                         console.error("Error al generar QR:", error);
@@ -694,35 +691,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.result === 'success') {
-                    // Guardar trabajador localmente
-                    const worker = {
-                        name: name,
-                        id: id,
-                        position: position,
-                        qrData: qrData,
-                        qrImageData: qrImageData,
-                        registeredAt: new Date().toISOString()
-                    };
-                    
-                    workers.push(worker);
-                    localStorage.setItem('workers', JSON.stringify(workers));
-                    
-                    // Guardar en historial de QR
-                    qrHistory.unshift({
-                        name: name,
-                        id: id,
-                        position: position,
-                        qrImageData: qrImageData,
-                        generatedAt: new Date().toISOString()
-                    });
-                    
-                    // Mantener solo los últimos 10 QR en el historial
-                    if (qrHistory.length > 10) {
-                        qrHistory = qrHistory.slice(0, 10);
-                    }
-                    
-                    localStorage.setItem('qrHistory', JSON.stringify(qrHistory));
-                    
                     showStatus(registerStatus, 'Trabajador registrado correctamente. Código QR generado.', 'success');
                     
                     // Limpiar campos
@@ -730,8 +698,8 @@
                     workerId.value = "";
                     workerPosition.value = "";
                     
-                    // Actualizar lista de trabajadores
-                    updateWorkerList();
+                    // Actualizar lista de trabajadores desde Google Sheets
+                    fetchWorkersFromGoogleSheets();
                 } else {
                     showStatus(registerStatus, 'Error al guardar en Google Sheets: ' + data.message, 'error');
                 }
@@ -760,8 +728,9 @@
             .then(data => {
                 if (data.result === 'success' && data.workers) {
                     workers = data.workers;
-                    localStorage.setItem('workers', JSON.stringify(workers));
                     updateWorkerList();
+                } else {
+                    console.error('Error al obtener trabajadores:', data.message);
                 }
             })
             .catch(error => {
@@ -782,8 +751,9 @@
             .then(data => {
                 if (data.result === 'success' && data.attendance) {
                     attendanceRecords = data.attendance;
-                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
                     updateAttendanceTable();
+                } else {
+                    console.error('Error al obtener registros de asistencia:', data.message);
                 }
             })
             .catch(error => {
@@ -810,7 +780,7 @@
             .then(function(stream) {
                 videoStream = stream;
                 video.srcObject = stream;
-                video.setAttribute('playsinline', true); // Importante para iOS
+                video.setAttribute('playsinline', true);
                 video.play();
                 isScanning = true;
                 scanQRCode();
@@ -840,13 +810,12 @@
             }
         }
         
-        // Escanear código QR - CON MEJORAS PARA COMPATIBILIDAD
+        // Escanear código QR
         function scanQRCode() {
             if (!isScanning) return;
             
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 const canvas = document.createElement('canvas');
-                // Ajustar el tamaño del canvas para mejorar la detección
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const context = canvas.getContext('2d');
@@ -859,7 +828,7 @@
                 
                 // Intentar detectar el código QR
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: 'dontInvert', // Intentar sin invertir primero
+                    inversionAttempts: 'dontInvert',
                 });
                 
                 if (code && !scanCooldown) {
@@ -877,26 +846,6 @@
                         registerAttendance(workerData);
                     } catch (e) {
                         console.error("Error al procesar QR:", e, "Contenido:", code.data);
-                        
-                        // Intentar con formato alternativo si el JSON falla
-                        try {
-                            // Si el JSON falla, intentar interpretar como texto plano
-                            const content = code.data;
-                            if (content.includes('|')) {
-                                // Formato alternativo: nombre|id|cargo
-                                const parts = content.split('|');
-                                const workerData = {
-                                    n: parts[0],
-                                    i: parts[1],
-                                    p: parts[2]
-                                };
-                                registerAttendance(workerData);
-                                return;
-                            }
-                        } catch (e2) {
-                            console.error("Error con formato alternativo:", e2);
-                        }
-                        
                         showStatus(scanResult, 'Código QR inválido: ' + e.message, 'error');
                         
                         // Reactivar el escáner después de un error
@@ -916,11 +865,8 @@
         
         // Registrar asistencia
         function registerAttendance(workerData) {
-            // Buscar trabajador - compatibilidad con formato nuevo y antiguo
-            const worker = workers.find(w => 
-                w.id === workerData.i || // Nuevo formato (abreviado)
-                w.id === workerData.id   // Formato antiguo
-            );
+            // Buscar trabajador
+            const worker = workers.find(w => w.id === workerData.id);
             
             if (worker) {
                 const now = new Date();
@@ -964,10 +910,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.result === 'success') {
-                    // Guardar registro localmente
-                    attendanceRecords.push(attendanceData);
-                    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                    
                     // Mostrar resultado
                     scanResult.innerHTML = `
                         <div class="status-message success">
@@ -979,8 +921,8 @@
                         </div>
                     `;
                     
-                    // Actualizar tabla de asistencias
-                    updateAttendanceTable();
+                    // Actualizar tabla de asistencias desde Google Sheets
+                    fetchAttendanceFromGoogleSheets();
                 } else {
                     showStatus(scanResult, 'Error al registrar asistencia: ' + data.message, 'error');
                     
@@ -1104,18 +1046,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.result === 'success') {
-                        // Eliminar de la lista local
-                        workers = workers.filter(worker => worker.id !== id);
-                        localStorage.setItem('workers', JSON.stringify(workers));
-                        
-                        // Eliminar registros de asistencia de este trabajador
-                        attendanceRecords = attendanceRecords.filter(record => record.id !== id);
-                        localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
-                        
-                        // Actualizar lista
-                        updateWorkerList();
-                        updateAttendanceTable();
-                        
+                        // Actualizar la lista desde Google Sheets
+                        fetchWorkersFromGoogleSheets();
                         showStatus(workerList, 'Trabajador eliminado correctamente', 'success');
                     } else {
                         showStatus(workerList, 'Error al eliminar trabajador: ' + data.message, 'error');
