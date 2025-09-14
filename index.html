@@ -326,6 +326,15 @@
             background-color: #8e44ad;
         }
         
+        .toggle-list-btn {
+            margin-bottom: 20px;
+            background-color: #f39c12;
+        }
+        
+        .toggle-list-btn:hover {
+            background-color: #e67e22;
+        }
+        
         .loading {
             position: relative;
             color: transparent !important;
@@ -492,8 +501,12 @@
                 
                 <div class="section">
                     <h3>Gestión de Trabajadores</h3>
-                    <button id="refreshWorkersBtn">Actualizar lista</button>
-                    <div id="workerList" class="worker-list"></div>
+                    <button id="toggleListBtn" class="toggle-list-btn">Mostrar Lista de Trabajadores</button>
+                    <div id="workerSearchContainer" class="hidden">
+                        <input type="text" id="workerSearch" placeholder="Buscar por nombre, ID o cargo">
+                        <button id="searchBtn">Buscar</button>
+                    </div>
+                    <div id="workerList" class="worker-list hidden"></div>
                 </div>
                 
                 <div class="section">
@@ -570,6 +583,10 @@
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         const toggleFormBtn = document.getElementById('toggleFormBtn');
         const registerWorkerSection = document.getElementById('registerWorkerSection');
+        const toggleListBtn = document.getElementById('toggleListBtn');
+        const workerSearchContainer = document.getElementById('workerSearchContainer');
+        const workerSearch = document.getElementById('workerSearch');
+        const searchBtn = document.getElementById('searchBtn');
         
         // Inicializar
         function init() {
@@ -589,9 +606,29 @@
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
             adminLoginBtn.addEventListener('click', adminLogin);
-            refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
             toggleFormBtn.addEventListener('click', toggleRegisterForm);
+            toggleListBtn.addEventListener('click', toggleWorkerList);
+            searchBtn.addEventListener('click', searchWorkers);
+            
+            // Event listeners para tecla Enter en campos de login
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+            
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+            
+            adminPasswordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    adminLogin();
+                }
+            });
             
             // Cargar datos iniciales desde Google Sheets
             fetchWorkersFromGoogleSheets();
@@ -627,6 +664,9 @@
             adminSection.classList.add('hidden');
             registerWorkerSection.classList.add('hidden');
             toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
+            workerList.classList.add('hidden');
+            workerSearchContainer.classList.add('hidden');
+            toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
             stopScanner();
         }
         
@@ -683,6 +723,36 @@
                 registerWorkerSection.classList.add('hidden');
                 toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
             }
+        }
+        
+        // Mostrar/ocultar lista de trabajadores
+        function toggleWorkerList() {
+            if (workerList.classList.contains('hidden')) {
+                workerList.classList.remove('hidden');
+                workerSearchContainer.classList.remove('hidden');
+                toggleListBtn.textContent = 'Ocultar Lista de Trabajadores';
+            } else {
+                workerList.classList.add('hidden');
+                workerSearchContainer.classList.add('hidden');
+                toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
+            }
+        }
+        
+        // Buscar trabajadores
+        function searchWorkers() {
+            const searchTerm = workerSearch.value.toLowerCase();
+            if (!searchTerm) {
+                updateWorkerList();
+                return;
+            }
+            
+            const filteredWorkers = workers.filter(worker => 
+                worker.name.toLowerCase().includes(searchTerm) ||
+                worker.id.toLowerCase().includes(searchTerm) ||
+                worker.position.toLowerCase().includes(searchTerm)
+            );
+            
+            updateWorkerList(filteredWorkers);
         }
         
         // Generar código QR
@@ -824,7 +894,7 @@
         
         // Obtener trabajadores desde Google Sheets
         function fetchWorkersFromGoogleSheets() {
-            setLoading(refreshWorkersBtn, true);
+            setLoading(toggleListBtn, true);
             
             const formData = new FormData();
             formData.append('action', 'getWorkers');
@@ -841,11 +911,11 @@
                 } else {
                     console.error('Error al obtener trabajadores:', data.message);
                 }
-                setLoading(refreshWorkersBtn, false);
+                setLoading(toggleListBtn, false);
             })
             .catch(error => {
                 console.error('Error al obtener trabajadores:', error);
-                setLoading(refreshWorkersBtn, false);
+                setLoading(toggleListBtn, false);
             });
         }
         
@@ -1104,15 +1174,15 @@
         }
         
         // Actualizar lista de trabajadores
-        function updateWorkerList() {
+        function updateWorkerList(workersToShow = workers) {
             workerList.innerHTML = "";
             
-            if (workers.length === 0) {
+            if (workersToShow.length === 0) {
                 workerList.innerHTML = "<p>No hay trabajadores registrados</p>";
                 return;
             }
             
-            workers.forEach((worker, index) => {
+            workersToShow.forEach((worker, index) => {
                 const workerItem = document.createElement('div');
                 workerItem.className = 'worker-item';
                 
@@ -1142,7 +1212,7 @@
                     </div>
                     <div class="action-buttons">
                         <button class="download-btn" data-id="${worker.id}" data-name="${worker.name}">Descargar QR</button>
-                        <button class="danger" data-id="${worker.id}">Eliminar</button>
+                        <button class="danger" data-id="${worker.id}" data-name="${worker.name}">Eliminar</button>
                     </div>
                 `;
                 workerList.appendChild(workerItem);
@@ -1171,18 +1241,42 @@
         // Descargar código QR - FUNCIÓN MEJORADA
         function downloadQRCode(id, name) {
             const worker = workers.find(w => w.id === id);
-            if (worker && worker.qrImageData) {
+            if (worker) {
                 try {
-                    // Crear un enlace de descarga directa
-                    const link = document.createElement('a');
-                    link.href = worker.qrImageData;
-                    link.download = `QR_${worker.name}_${worker.id}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // Crear datos para el QR
+                    const workerData = JSON.stringify({
+                        name: worker.name,
+                        id: worker.id,
+                        position: worker.position,
+                        timestamp: new Date().getTime()
+                    });
+                    
+                    // Crear un canvas para generar el QR
+                    const canvas = document.createElement('canvas');
+                    
+                    QRCode.toCanvas(canvas, workerData, {
+                        width: 280,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        },
+                        errorCorrectionLevel: 'H'
+                    }, function(error) {
+                        if (error) {
+                            console.error("Error al generar QR para descarga:", error);
+                            showStatus(workerList, 'Error al generar el código QR', 'error');
+                            return;
+                        }
+                        
+                        // Descargar el QR
+                        canvas.toBlob(function(blob) {
+                            saveAs(blob, `QR_${worker.name}_${worker.id}.png`);
+                        });
+                    });
                 } catch (error) {
                     console.error("Error al descargar QR:", error);
-                    showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                    showStatus(workerList, 'Error al descargar el QR', 'error');
                 }
             } else {
                 showStatus(workerList, 'No se puede descargar el QR. Intente actualizar la lista.', 'error');
@@ -1234,7 +1328,7 @@
                     <td>${record.id}</td>
                     <td>${record.position}</td>
                     <td>${fecha}</td>
-                    <td>${hora}</td>
+                    <td>${hora</td>
                 `;
                 attendanceTableBody.appendChild(row);
             });
