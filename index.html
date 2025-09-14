@@ -88,8 +88,6 @@
         
         button.danger {
             background-color: #e74c3c;
-            padding: 10px 16px;
-            font-size: 14px;
         }
         
         button.danger:hover {
@@ -98,8 +96,6 @@
         
         button.success {
             background-color: #2ecc71;
-            padding: 12px 20px;
-            font-size: 16px;
         }
         
         button.success:hover {
@@ -342,7 +338,7 @@
         }
         
         .download-btn {
-            padding: 12px 20px;
+            padding: 8px 12px;
             background-color: #2ecc71;
             color: white;
             border: none;
@@ -353,7 +349,7 @@
             align-items: center;
             justify-content: center;
             margin: 2px;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .download-btn:hover {
@@ -363,7 +359,7 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         
         .search-container {
@@ -451,9 +447,9 @@
                 flex-wrap: wrap;
             }
             
-            .download-btn, .danger {
-                font-size: 12px;
-                padding: 10px 12px;
+            .download-btn {
+                font-size: 11px;
+                padding: 6px 8px;
             }
         }
         
@@ -1299,7 +1295,7 @@
                 });
                 
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Descargar la imagen
                 fetch(qrUrl)
@@ -1368,21 +1364,17 @@
             });
         }
         
-        // Eliminar trabajador - FUNCIÓN CORREGIDA
+        // Eliminar trabajador
         function deleteWorker(id, name) {
             if (confirm(`¿Está seguro de que desea eliminar al trabajador ${name}?`)) {
-                // Crear un objeto con los datos en lugar de FormData
-                const params = new URLSearchParams();
-                params.append('action', 'delete');
-                params.append('id', id);
-                params.append('name', name);
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id', id);
+                formData.append('name', name);
                 
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: params
+                    body: formData
                 })
                 .then(response => response.json())
                 .then(data => {
