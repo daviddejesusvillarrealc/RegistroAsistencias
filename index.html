@@ -88,6 +88,8 @@
         
         button.danger {
             background-color: #e74c3c;
+            padding: 6px 10px; /* Tamaño más pequeño para botones de eliminar */
+            font-size: 12px;
         }
         
         button.danger:hover {
@@ -451,6 +453,11 @@
                 font-size: 11px;
                 padding: 6px 8px;
             }
+            
+            button.danger {
+                padding: 4px 8px; /* Tamaño más pequeño para móviles */
+                font-size: 11px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -485,6 +492,11 @@
             
             .action-buttons {
                 flex-direction: column;
+            }
+            
+            button.danger {
+                padding: 3px 6px; /* Tamaño más pequeño para móviles pequeños */
+                font-size: 10px;
             }
         }
     </style>
