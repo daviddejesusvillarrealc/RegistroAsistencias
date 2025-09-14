@@ -1037,6 +1037,9 @@
                 setTimeout(() => {
                     scanCooldown = false;
                     startScanner();
+                    startScanBtn.classList.remove('hidden');
+                    stopScanBtn.classList.add('hidden');
+                    scannerContainer.style.display = 'none';
                 }, 2000);
             }
         }
@@ -1079,6 +1082,9 @@
                     setTimeout(() => {
                         scanCooldown = false;
                         startScanner();
+                        startScanBtn.classList.remove('hidden');
+                        stopScanBtn.classList.add('hidden');
+                        scannerContainer.style.display = 'none';
                     }, 2000);
                 }
             })
@@ -1090,6 +1096,9 @@
                 setTimeout(() => {
                     scanCooldown = false;
                     startScanner();
+                    startScanBtn.classList.remove('hidden');
+                    stopScanBtn.classList.add('hidden');
+                    scannerContainer.style.display = 'none';
                 }, 2000);
             });
         }
@@ -1153,7 +1162,8 @@
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
-                    deleteWorker(id);
+                    const name = this.getAttribute('data-name');
+                    deleteWorker(id, name);
                 });
             });
         }
@@ -1163,39 +1173,15 @@
             const worker = workers.find(w => w.id === id);
             if (worker && worker.qrImageData) {
                 try {
-                    // Crear un elemento canvas para regenerar el QR
-                    const canvas = document.createElement('canvas');
-                    
-                    // Crear una imagen a partir de los datos base64
-                    const img = new Image();
-                    img.onload = function() {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        
-                        // Usar la función mejorada de descarga
-                        downloadQRCodeFromCanvas(canvas, worker.name, worker.id);
-                    };
-                    
-                    img.onerror = function() {
-                        // Fallback: intentar descargar directamente
-                        try {
-                            const link = document.createElement('a');
-                            link.href = worker.qrImageData;
-                            link.download = `QR_${worker.name}_${worker.id}.png`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        } catch (error) {
-                            console.error("Error al descargar QR:", error);
-                            showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
-                        }
-                    };
-                    
-                    img.src = worker.qrImageData;
+                    // Crear un enlace de descarga directa
+                    const link = document.createElement('a');
+                    link.href = worker.qrImageData;
+                    link.download = `QR_${worker.name}_${worker.id}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 } catch (error) {
-                    console.error("Error al procesar imagen QR:", error);
+                    console.error("Error al descargar QR:", error);
                     showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
                 }
             } else {
@@ -1255,8 +1241,8 @@
         }
         
         // Eliminar trabajador
-        function deleteWorker(id) {
-            if (confirm("¿Está seguro de que desea eliminar este trabajador?")) {
+        function deleteWorker(id, name) {
+            if (confirm(`¿Está seguro de que desea eliminar al trabajador ${name}?`)) {
                 const worker = workers.find(w => w.id === id);
                 if (!worker) {
                     showStatus(workerList, 'Trabajador no encontrado', 'error');
@@ -1266,6 +1252,7 @@
                 const formData = new FormData();
                 formData.append('action', 'delete');
                 formData.append('id', id);
+                formData.append('name', name);
                 
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
@@ -1274,9 +1261,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.result === 'success') {
-                        // Actualizar la lista desde Google Sheets
-                        fetchWorkersFromGoogleSheets();
                         showStatus(workerList, 'Trabajador eliminado correctamente', 'success');
+                        // Actualizar la lista desde Google Sheets después de un breve delay
+                        setTimeout(() => {
+                            fetchWorkersFromGoogleSheets();
+                        }, 1000);
                     } else {
                         showStatus(workerList, 'Error al eliminar trabajador: ' + data.message, 'error');
                     }
