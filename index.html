@@ -21,6 +21,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            position: relative;
         }
         
         .container {
@@ -88,7 +89,7 @@
         
         button.danger {
             background-color: #e74c3c;
-            padding: 6px 10px; /* Tamaño más pequeño para botones de eliminar */
+            padding: 6px 10px;
             font-size: 12px;
         }
         
@@ -399,6 +400,50 @@
             animation: spin 1s ease-in-out infinite;
         }
         
+        /* Notificación flotante */
+        .floating-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+            max-width: 300px;
+        }
+        
+        .floating-notification.success {
+            background-color: #2ecc71;
+        }
+        
+        .floating-notification.error {
+            background-color: #e74c3c;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -455,8 +500,15 @@
             }
             
             button.danger {
-                padding: 4px 8px; /* Tamaño más pequeño para móviles */
+                padding: 4px 8px;
                 font-size: 11px;
+            }
+            
+            .floating-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
             }
         }
         
@@ -495,13 +547,21 @@
             }
             
             button.danger {
-                padding: 3px 6px; /* Tamaño más pequeño para móviles pequeños */
+                padding: 3px 6px;
                 font-size: 10px;
+            }
+            
+            .floating-notification {
+                font-size: 14px;
+                padding: 12px 15px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Contenedor para notificaciones flotantes -->
+    <div id="notification-container"></div>
+    
     <!-- Pantalla de Login -->
     <div class="container" id="loginScreen">
         <div class="login-container">
@@ -677,6 +737,7 @@
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         const subTabs = document.querySelectorAll('.sub-tab');
         const subTabContents = document.querySelectorAll('.sub-tab-content');
+        const notificationContainer = document.getElementById('notification-container');
         
         // Inicializar
         function init() {
@@ -866,7 +927,7 @@
             
             try {
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Crear imagen del QR
                 const img = document.createElement('img');
@@ -1307,7 +1368,7 @@
                 });
                 
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Descargar la imagen
                 fetch(qrUrl)
@@ -1317,11 +1378,11 @@
                     })
                     .catch(error => {
                         console.error("Error al descargar QR:", error);
-                        showStatus(workerTableBody, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                        showFloatingNotification('Error al descargar el QR. Intente actualizar la lista.', 'error');
                     });
             } catch (error) {
                 console.error("Error al descargar QR:", error);
-                showStatus(workerTableBody, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                showFloatingNotification('Error al descargar el QR. Intente actualizar la lista.', 'error');
             }
         }
         
@@ -1391,20 +1452,36 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.result === 'success') {
-                        showStatus(workerTableBody, 'Trabajador eliminado correctamente', 'success');
+                        // Mostrar notificación flotante en lugar de modificar la tabla
+                        showFloatingNotification('Trabajador eliminado correctamente', 'success');
+                        
                         // Actualizar la lista de trabajadores
                         setTimeout(() => {
                             fetchWorkersFromGoogleSheets();
                         }, 1000);
                     } else {
-                        showStatus(workerTableBody, 'Error al eliminar trabajador: ' + data.message, 'error');
+                        showFloatingNotification('Error al eliminar trabajador: ' + data.message, 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showStatus(workerTableBody, 'Error de conexión con Google Sheets', 'error');
+                    showFloatingNotification('Error de conexión con Google Sheets', 'error');
                 });
             }
+        }
+        
+        // Mostrar notificación flotante
+        function showFloatingNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `floating-notification ${type}`;
+            notification.textContent = message;
+            
+            notificationContainer.appendChild(notification);
+            
+            // Eliminar la notificación después de la animación
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
         
         // Mostrar mensaje de estado
