@@ -65,6 +65,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 600;
+            position: relative;
         }
         
         button:hover {
@@ -316,6 +317,38 @@
             gap: 5px;
         }
         
+        .toggle-form-btn {
+            margin-bottom: 20px;
+            background-color: #9b59b6;
+        }
+        
+        .toggle-form-btn:hover {
+            background-color: #8e44ad;
+        }
+        
+        .loading {
+            position: relative;
+            color: transparent !important;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -445,7 +478,9 @@
             </div>
             
             <div id="adminSection" class="admin-section hidden">
-                <div class="section">
+                <button id="toggleFormBtn" class="toggle-form-btn">Mostrar Formulario de Registro</button>
+                
+                <div id="registerWorkerSection" class="section hidden">
                     <h3>Registrar Nuevo Trabajador</h3>
                     <input type="text" id="workerName" placeholder="Nombre del trabajador">
                     <input type="text" id="workerId" placeholder="ID del trabajador">
@@ -490,7 +525,7 @@
         const USERNAME = "admin";
         const PASSWORD = "admin123";
         const ADMIN_PASSWORD = "admin123";
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKiOOEGNCasbPHh412RkZsluTIszhVaCIWyG1_eVqnKxLf39MKfoqsHklpjktw8eCAmA/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIvuYvsQzqLEqcMMAe_idO5RoELsdHqZCRsQYbrVxB3ihSNkkgzUREImhvbhZZFrCIog/exec";
         
         // Variables globales
         let workers = [];
@@ -533,6 +568,8 @@
         const attendanceTableBody = document.getElementById('attendanceTableBody');
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
+        const toggleFormBtn = document.getElementById('toggleFormBtn');
+        const registerWorkerSection = document.getElementById('registerWorkerSection');
         
         // Inicializar
         function init() {
@@ -554,6 +591,7 @@
             adminLoginBtn.addEventListener('click', adminLogin);
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
+            toggleFormBtn.addEventListener('click', toggleRegisterForm);
             
             // Cargar datos iniciales desde Google Sheets
             fetchWorkersFromGoogleSheets();
@@ -562,15 +600,21 @@
         
         // Login principal
         function login() {
-            if (usernameInput.value === USERNAME && passwordInput.value === PASSWORD) {
-                isLoggedIn = true;
-                loginScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
-                usernameInput.value = "";
-                passwordInput.value = "";
-            } else {
-                showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
-            }
+            setLoading(loginBtn, true);
+            
+            // Simular tiempo de carga
+            setTimeout(() => {
+                if (usernameInput.value === USERNAME && passwordInput.value === PASSWORD) {
+                    isLoggedIn = true;
+                    loginScreen.classList.add('hidden');
+                    appScreen.classList.remove('hidden');
+                    usernameInput.value = "";
+                    passwordInput.value = "";
+                } else {
+                    showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
+                }
+                setLoading(loginBtn, false);
+            }, 1000);
         }
         
         // Logout
@@ -581,21 +625,29 @@
             appScreen.classList.add('hidden');
             adminLoginSection.classList.remove('hidden');
             adminSection.classList.add('hidden');
+            registerWorkerSection.classList.add('hidden');
+            toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
             stopScanner();
         }
         
         // Login de administrador
         function adminLogin() {
-            if (adminPasswordInput.value === ADMIN_PASSWORD) {
-                isAdminLoggedIn = true;
-                adminLoginSection.classList.add('hidden');
-                adminSection.classList.remove('hidden');
-                adminPasswordInput.value = "";
-                updateWorkerList();
-                updateAttendanceTable();
-            } else {
-                showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
-            }
+            setLoading(adminLoginBtn, true);
+            
+            // Simular tiempo de carga
+            setTimeout(() => {
+                if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                    isAdminLoggedIn = true;
+                    adminLoginSection.classList.add('hidden');
+                    adminSection.classList.remove('hidden');
+                    adminPasswordInput.value = "";
+                    updateWorkerList();
+                    updateAttendanceTable();
+                } else {
+                    showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
+                }
+                setLoading(adminLoginBtn, false);
+            }, 1000);
         }
         
         // Cambiar pestaña
@@ -622,6 +674,17 @@
             }
         }
         
+        // Mostrar/ocultar formulario de registro
+        function toggleRegisterForm() {
+            if (registerWorkerSection.classList.contains('hidden')) {
+                registerWorkerSection.classList.remove('hidden');
+                toggleFormBtn.textContent = 'Ocultar Formulario de Registro';
+            } else {
+                registerWorkerSection.classList.add('hidden');
+                toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
+            }
+        }
+        
         // Generar código QR
         function generateQRCode() {
             const name = workerName.value.trim();
@@ -634,8 +697,7 @@
             }
             
             // Deshabilitar botón mientras se procesa
-            generateQRBtn.disabled = true;
-            generateQRBtn.innerHTML = 'Generando...';
+            setLoading(generateQRBtn, true);
             
             // Limpiar QR anterior
             qrcodeDiv.innerHTML = "Generando código QR...";
@@ -667,8 +729,7 @@
                     if (error) {
                         console.error("Error al generar QR:", error);
                         showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
-                        generateQRBtn.disabled = false;
-                        generateQRBtn.innerHTML = 'Generar código QR';
+                        setLoading(generateQRBtn, false);
                         return;
                     }
                     
@@ -692,8 +753,7 @@
             } catch (error) {
                 console.error("Error al generar QR:", error);
                 showStatus(registerStatus, 'Error al generar el código QR: ' + error.message, 'error');
-                generateQRBtn.disabled = false;
-                generateQRBtn.innerHTML = 'Generar código QR';
+                setLoading(generateQRBtn, false);
             }
         }
         
@@ -753,19 +813,19 @@
                     showStatus(registerStatus, 'Error al guardar en Google Sheets: ' + data.message, 'error');
                 }
                 
-                generateQRBtn.disabled = false;
-                generateQRBtn.innerHTML = 'Generar código QR';
+                setLoading(generateQRBtn, false);
             })
             .catch(error => {
                 console.error('Error:', error);
                 showStatus(registerStatus, 'Error de conexión con Google Sheets', 'error');
-                generateQRBtn.disabled = false;
-                generateQRBtn.innerHTML = 'Generar código QR';
+                setLoading(generateQRBtn, false);
             });
         }
         
         // Obtener trabajadores desde Google Sheets
         function fetchWorkersFromGoogleSheets() {
+            setLoading(refreshWorkersBtn, true);
+            
             const formData = new FormData();
             formData.append('action', 'getWorkers');
             
@@ -781,14 +841,18 @@
                 } else {
                     console.error('Error al obtener trabajadores:', data.message);
                 }
+                setLoading(refreshWorkersBtn, false);
             })
             .catch(error => {
                 console.error('Error al obtener trabajadores:', error);
+                setLoading(refreshWorkersBtn, false);
             });
         }
         
         // Obtener registros de asistencia desde Google Sheets
         function fetchAttendanceFromGoogleSheets() {
+            setLoading(refreshAttendanceBtn, true);
+            
             const formData = new FormData();
             formData.append('action', 'getAttendance');
             
@@ -804,14 +868,18 @@
                 } else {
                     console.error('Error al obtener registros de asistencia:', data.message);
                 }
+                setLoading(refreshAttendanceBtn, false);
             })
             .catch(error => {
                 console.error('Error al obtener registros de asistencia:', error);
+                setLoading(refreshAttendanceBtn, false);
             });
         }
         
         // Iniciar escáner
         function startScanner() {
+            setLoading(startScanBtn, true);
+            
             scannerContainer.style.display = 'block';
             startScanBtn.classList.add('hidden');
             stopScanBtn.classList.remove('hidden');
@@ -832,11 +900,13 @@
                 video.setAttribute('playsinline', true);
                 video.play();
                 isScanning = true;
+                setLoading(startScanBtn, false);
                 scanQRCode();
             })
             .catch(function(err) {
                 console.error("Error al acceder a la cámara: ", err);
                 showStatus(scanResult, 'No se pudo acceder a la cámara: ' + err.message, 'error');
+                setLoading(startScanBtn, false);
             });
         }
         
@@ -1041,10 +1111,17 @@
                 let registeredDate = 'Fecha desconocida';
                 if (worker.registeredAt) {
                     try {
+                        // Intentar parsear la fecha en formato ISO
                         const date = new Date(worker.registeredAt);
-                        registeredDate = date.toLocaleDateString('es-VE');
+                        if (!isNaN(date.getTime())) {
+                            registeredDate = date.toLocaleDateString('es-VE');
+                        } else {
+                            // Si falla, intentar otros formatos
+                            registeredDate = worker.registeredAt;
+                        }
                     } catch (e) {
                         console.error("Error al formatear fecha:", e);
+                        registeredDate = worker.registeredAt || 'Fecha desconocida';
                     }
                 }
                 
@@ -1086,15 +1163,39 @@
             const worker = workers.find(w => w.id === id);
             if (worker && worker.qrImageData) {
                 try {
-                    // Usar el método directo con los datos base64
-                    const link = document.createElement('a');
-                    link.href = worker.qrImageData;
-                    link.download = `QR_${worker.name}_${worker.id}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // Crear un elemento canvas para regenerar el QR
+                    const canvas = document.createElement('canvas');
+                    
+                    // Crear una imagen a partir de los datos base64
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Usar la función mejorada de descarga
+                        downloadQRCodeFromCanvas(canvas, worker.name, worker.id);
+                    };
+                    
+                    img.onerror = function() {
+                        // Fallback: intentar descargar directamente
+                        try {
+                            const link = document.createElement('a');
+                            link.href = worker.qrImageData;
+                            link.download = `QR_${worker.name}_${worker.id}.png`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } catch (error) {
+                            console.error("Error al descargar QR:", error);
+                            showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                        }
+                    };
+                    
+                    img.src = worker.qrImageData;
                 } catch (error) {
-                    console.error("Error al descargar QR:", error);
+                    console.error("Error al procesar imagen QR:", error);
                     showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
                 }
             } else {
@@ -1197,9 +1298,19 @@
             }, 5000);
         }
         
+        // Establecer estado de carga en un botón
+        function setLoading(button, isLoading) {
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
+        }
+        
         // Inicializar la aplicación
         window.onload = init;
     </script>
 </body>
 </html>
-
