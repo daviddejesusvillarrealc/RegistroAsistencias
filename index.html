@@ -88,6 +88,8 @@
         
         button.danger {
             background-color: #e74c3c;
+            padding: 10px 16px;
+            font-size: 14px;
         }
         
         button.danger:hover {
@@ -96,6 +98,8 @@
         
         button.success {
             background-color: #2ecc71;
+            padding: 12px 20px;
+            font-size: 16px;
         }
         
         button.success:hover {
@@ -338,7 +342,7 @@
         }
         
         .download-btn {
-            padding: 8px 12px;
+            padding: 12px 20px;
             background-color: #2ecc71;
             color: white;
             border: none;
@@ -349,7 +353,7 @@
             align-items: center;
             justify-content: center;
             margin: 2px;
-            font-size: 12px;
+            font-size: 14px;
         }
         
         .download-btn:hover {
@@ -359,7 +363,7 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
         
         .search-container {
@@ -447,9 +451,9 @@
                 flex-wrap: wrap;
             }
             
-            .download-btn {
-                font-size: 11px;
-                padding: 6px 8px;
+            .download-btn, .danger {
+                font-size: 12px;
+                padding: 10px 12px;
             }
         }
         
@@ -618,7 +622,7 @@
         const USERNAME = "admin";
         const PASSWORD = "admin123";
         const ADMIN_PASSWORD = "admin123";
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhAvZb3qzU3pUgO5j54PDNN0VFztt7dfRU55fhcFjf6PyyudRoiXbZejgwsEhl8bEgDQ/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSYEWe50OZxuu1BnW0rC8G-28mnWp60OqPPqyV0LJ-OHyW7IL7C-BxFgCTdkdUP7JH5w/exec";
         const QUICKCHART_URL = "https://quickchart.io/qr";
         
         // Variables globales
@@ -1295,7 +1299,7 @@
                 });
                 
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Descargar la imagen
                 fetch(qrUrl)
@@ -1364,17 +1368,21 @@
             });
         }
         
-        // Eliminar trabajador
+        // Eliminar trabajador - FUNCIÓN CORREGIDA
         function deleteWorker(id, name) {
             if (confirm(`¿Está seguro de que desea eliminar al trabajador ${name}?`)) {
-                const formData = new FormData();
-                formData.append('action', 'delete');
-                formData.append('id', id);
-                formData.append('name', name);
+                // Crear un objeto con los datos en lugar de FormData
+                const params = new URLSearchParams();
+                params.append('action', 'delete');
+                params.append('id', id);
+                params.append('name', name);
                 
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
                 })
                 .then(response => response.json())
                 .then(data => {
