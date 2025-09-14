@@ -743,6 +743,11 @@
         function init() {
             // Event listeners
             loginBtn.addEventListener('click', login);
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
             passwordInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     login();
@@ -927,7 +932,7 @@
             
             try {
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Crear imagen del QR
                 const img = document.createElement('img');
@@ -1368,7 +1373,7 @@
                 });
                 
                 // Generar URL para QuickChart.io
-                const qrUrl = `${QUICKCHART_URL?text=${encodeURIComponent(workerData)}&size=300`;
+                const qrUrl = `${QUICKCHART_URL}?text=${encodeURIComponent(workerData)}&size=300`;
                 
                 // Descargar la imagen
                 fetch(qrUrl)
