@@ -159,6 +159,11 @@
         
         .worker-list {
             margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
         }
         
         .worker-item {
@@ -327,12 +332,28 @@
         }
         
         .toggle-list-btn {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background-color: #f39c12;
         }
         
         .toggle-list-btn:hover {
             background-color: #e67e22;
+        }
+        
+        .search-container {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .search-container input {
+            padding-right: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 14px;
+            color: #7f8c8d;
         }
         
         .loading {
@@ -445,8 +466,8 @@
             <h1>Sistema de Asistencias</h1>
             <div class="section">
                 <h2>Iniciar Sesión</h2>
-                <input type="text" id="username" placeholder="Usuario">
-                <input type="password" id="password" placeholder="Contraseña">
+                <input type="text" id="username" placeholder="Usuario" autocomplete="username">
+                <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
                 <button id="loginBtn">Ingresar al Sistema</button>
                 <div id="loginStatus"></div>
             </div>
@@ -481,7 +502,7 @@
         <div class="tab-content" id="adminTab">
             <div class="section login-section" id="adminLoginSection">
                 <h2>Acceso de Administrador</h2>
-                <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+                <input type="password" id="adminPassword" placeholder="Contraseña de administrador" autocomplete="current-password">
                 <button id="adminLoginBtn">Ingresar como Administrador</button>
                 <div id="adminLoginStatus"></div>
             </div>
@@ -502,11 +523,15 @@
                 <div class="section">
                     <h3>Gestión de Trabajadores</h3>
                     <button id="toggleListBtn" class="toggle-list-btn">Mostrar Lista de Trabajadores</button>
-                    <div id="workerSearchContainer" class="hidden">
-                        <input type="text" id="workerSearch" placeholder="Buscar por nombre, ID o cargo">
-                        <button id="searchBtn">Buscar</button>
+                    
+                    <div id="workerListContainer" class="hidden">
+                        <div class="search-container">
+                            <input type="text" id="searchWorker" placeholder="Buscar trabajador...">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                        <div id="workerList" class="worker-list"></div>
                     </div>
-                    <div id="workerList" class="worker-list hidden"></div>
+                    <button id="refreshWorkersBtn" class="secondary">Actualizar lista</button>
                 </div>
                 
                 <div class="section">
@@ -578,20 +603,32 @@
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         const adminLoginStatus = document.getElementById('adminLoginStatus');
         const workerList = document.getElementById('workerList');
+        const workerListContainer = document.getElementById('workerListContainer');
+        const toggleListBtn = document.getElementById('toggleListBtn');
+        const searchWorkerInput = document.getElementById('searchWorker');
         const attendanceTableBody = document.getElementById('attendanceTableBody');
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
         const toggleFormBtn = document.getElementById('toggleFormBtn');
         const registerWorkerSection = document.getElementById('registerWorkerSection');
-        const toggleListBtn = document.getElementById('toggleListBtn');
-        const workerSearchContainer = document.getElementById('workerSearchContainer');
-        const workerSearch = document.getElementById('workerSearch');
-        const searchBtn = document.getElementById('searchBtn');
         
         // Inicializar
         function init() {
             // Event listeners
             loginBtn.addEventListener('click', login);
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+            
+            adminLoginBtn.addEventListener('click', adminLogin);
+            adminPasswordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    adminLogin();
+                }
+            });
+            
             logoutTab.addEventListener('click', logout);
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -605,30 +642,11 @@
             generateQRBtn.addEventListener('click', generateQRCode);
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
-            adminLoginBtn.addEventListener('click', adminLogin);
+            refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
             toggleFormBtn.addEventListener('click', toggleRegisterForm);
             toggleListBtn.addEventListener('click', toggleWorkerList);
-            searchBtn.addEventListener('click', searchWorkers);
-            
-            // Event listeners para tecla Enter en campos de login
-            usernameInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    login();
-                }
-            });
-            
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    login();
-                }
-            });
-            
-            adminPasswordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    adminLogin();
-                }
-            });
+            searchWorkerInput.addEventListener('input', filterWorkerList);
             
             // Cargar datos iniciales desde Google Sheets
             fetchWorkersFromGoogleSheets();
@@ -637,21 +655,15 @@
         
         // Login principal
         function login() {
-            setLoading(loginBtn, true);
-            
-            // Simular tiempo de carga
-            setTimeout(() => {
-                if (usernameInput.value === USERNAME && passwordInput.value === PASSWORD) {
-                    isLoggedIn = true;
-                    loginScreen.classList.add('hidden');
-                    appScreen.classList.remove('hidden');
-                    usernameInput.value = "";
-                    passwordInput.value = "";
-                } else {
-                    showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
-                }
-                setLoading(loginBtn, false);
-            }, 1000);
+            if (usernameInput.value === USERNAME && passwordInput.value === PASSWORD) {
+                isLoggedIn = true;
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                usernameInput.value = "";
+                passwordInput.value = "";
+            } else {
+                showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
+            }
         }
         
         // Logout
@@ -663,31 +675,24 @@
             adminLoginSection.classList.remove('hidden');
             adminSection.classList.add('hidden');
             registerWorkerSection.classList.add('hidden');
+            workerListContainer.classList.add('hidden');
             toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
-            workerList.classList.add('hidden');
-            workerSearchContainer.classList.add('hidden');
             toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
             stopScanner();
         }
         
         // Login de administrador
         function adminLogin() {
-            setLoading(adminLoginBtn, true);
-            
-            // Simular tiempo de carga
-            setTimeout(() => {
-                if (adminPasswordInput.value === ADMIN_PASSWORD) {
-                    isAdminLoggedIn = true;
-                    adminLoginSection.classList.add('hidden');
-                    adminSection.classList.remove('hidden');
-                    adminPasswordInput.value = "";
-                    updateWorkerList();
-                    updateAttendanceTable();
-                } else {
-                    showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
-                }
-                setLoading(adminLoginBtn, false);
-            }, 1000);
+            if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                adminLoginSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                adminPasswordInput.value = "";
+                updateWorkerList();
+                updateAttendanceTable();
+            } else {
+                showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
+            }
         }
         
         // Cambiar pestaña
@@ -727,32 +732,30 @@
         
         // Mostrar/ocultar lista de trabajadores
         function toggleWorkerList() {
-            if (workerList.classList.contains('hidden')) {
-                workerList.classList.remove('hidden');
-                workerSearchContainer.classList.remove('hidden');
+            if (workerListContainer.classList.contains('hidden')) {
+                workerListContainer.classList.remove('hidden');
                 toggleListBtn.textContent = 'Ocultar Lista de Trabajadores';
             } else {
-                workerList.classList.add('hidden');
-                workerSearchContainer.classList.add('hidden');
+                workerListContainer.classList.add('hidden');
                 toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
             }
         }
         
-        // Buscar trabajadores
-        function searchWorkers() {
-            const searchTerm = workerSearch.value.toLowerCase();
-            if (!searchTerm) {
-                updateWorkerList();
-                return;
-            }
+        // Filtrar lista de trabajadores
+        function filterWorkerList() {
+            const searchTerm = searchWorkerInput.value.toLowerCase();
+            const workerItems = workerList.querySelectorAll('.worker-item');
             
-            const filteredWorkers = workers.filter(worker => 
-                worker.name.toLowerCase().includes(searchTerm) ||
-                worker.id.toLowerCase().includes(searchTerm) ||
-                worker.position.toLowerCase().includes(searchTerm)
-            );
-            
-            updateWorkerList(filteredWorkers);
+            workerItems.forEach(item => {
+                const workerName = item.querySelector('strong').textContent.toLowerCase();
+                const workerId = item.querySelector('div').textContent.toLowerCase();
+                
+                if (workerName.includes(searchTerm) || workerId.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         }
         
         // Generar código QR
@@ -894,7 +897,7 @@
         
         // Obtener trabajadores desde Google Sheets
         function fetchWorkersFromGoogleSheets() {
-            setLoading(toggleListBtn, true);
+            setLoading(refreshWorkersBtn, true);
             
             const formData = new FormData();
             formData.append('action', 'getWorkers');
@@ -911,11 +914,11 @@
                 } else {
                     console.error('Error al obtener trabajadores:', data.message);
                 }
-                setLoading(toggleListBtn, false);
+                setLoading(refreshWorkersBtn, false);
             })
             .catch(error => {
                 console.error('Error al obtener trabajadores:', error);
-                setLoading(toggleListBtn, false);
+                setLoading(refreshWorkersBtn, false);
             });
         }
         
@@ -1107,9 +1110,6 @@
                 setTimeout(() => {
                     scanCooldown = false;
                     startScanner();
-                    startScanBtn.classList.remove('hidden');
-                    stopScanBtn.classList.add('hidden');
-                    scannerContainer.style.display = 'none';
                 }, 2000);
             }
         }
@@ -1152,9 +1152,6 @@
                     setTimeout(() => {
                         scanCooldown = false;
                         startScanner();
-                        startScanBtn.classList.remove('hidden');
-                        stopScanBtn.classList.add('hidden');
-                        scannerContainer.style.display = 'none';
                     }, 2000);
                 }
             })
@@ -1166,23 +1163,20 @@
                 setTimeout(() => {
                     scanCooldown = false;
                     startScanner();
-                    startScanBtn.classList.remove('hidden');
-                    stopScanBtn.classList.add('hidden');
-                    scannerContainer.style.display = 'none';
                 }, 2000);
             });
         }
         
         // Actualizar lista de trabajadores
-        function updateWorkerList(workersToShow = workers) {
+        function updateWorkerList() {
             workerList.innerHTML = "";
             
-            if (workersToShow.length === 0) {
+            if (workers.length === 0) {
                 workerList.innerHTML = "<p>No hay trabajadores registrados</p>";
                 return;
             }
             
-            workersToShow.forEach((worker, index) => {
+            workers.forEach((worker, index) => {
                 const workerItem = document.createElement('div');
                 workerItem.className = 'worker-item';
                 
@@ -1241,42 +1235,18 @@
         // Descargar código QR - FUNCIÓN MEJORADA
         function downloadQRCode(id, name) {
             const worker = workers.find(w => w.id === id);
-            if (worker) {
+            if (worker && worker.qrImageData) {
                 try {
-                    // Crear datos para el QR
-                    const workerData = JSON.stringify({
-                        name: worker.name,
-                        id: worker.id,
-                        position: worker.position,
-                        timestamp: new Date().getTime()
-                    });
-                    
-                    // Crear un canvas para generar el QR
-                    const canvas = document.createElement('canvas');
-                    
-                    QRCode.toCanvas(canvas, workerData, {
-                        width: 280,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        },
-                        errorCorrectionLevel: 'H'
-                    }, function(error) {
-                        if (error) {
-                            console.error("Error al generar QR para descarga:", error);
-                            showStatus(workerList, 'Error al generar el código QR', 'error');
-                            return;
-                        }
-                        
-                        // Descargar el QR
-                        canvas.toBlob(function(blob) {
-                            saveAs(blob, `QR_${worker.name}_${worker.id}.png`);
-                        });
-                    });
+                    // Crear un enlace de descarga directa
+                    const link = document.createElement('a');
+                    link.href = worker.qrImageData;
+                    link.download = `QR_${name}_${id}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 } catch (error) {
                     console.error("Error al descargar QR:", error);
-                    showStatus(workerList, 'Error al descargar el QR', 'error');
+                    showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
                 }
             } else {
                 showStatus(workerList, 'No se puede descargar el QR. Intente actualizar la lista.', 'error');
@@ -1328,7 +1298,7 @@
                     <td>${record.id}</td>
                     <td>${record.position}</td>
                     <td>${fecha}</td>
-                    <td>${hora</td>
+                    <td>${hora}</td>
                 `;
                 attendanceTableBody.appendChild(row);
             });
