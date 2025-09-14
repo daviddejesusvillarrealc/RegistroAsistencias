@@ -211,11 +211,42 @@
             color: white;
         }
         
+        .sub-tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sub-tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            white-space: nowrap;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .sub-tab.active {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
         .tab-content {
             display: none;
         }
         
         .tab-content.active {
+            display: block;
+        }
+        
+        .sub-tab-content {
+            display: none;
+        }
+        
+        .sub-tab-content.active {
             display: block;
         }
         
@@ -322,24 +353,6 @@
             gap: 5px;
         }
         
-        .toggle-form-btn {
-            margin-bottom: 20px;
-            background-color: #9b59b6;
-        }
-        
-        .toggle-form-btn:hover {
-            background-color: #8e44ad;
-        }
-        
-        .toggle-list-btn {
-            margin-bottom: 15px;
-            background-color: #f39c12;
-        }
-        
-        .toggle-list-btn:hover {
-            background-color: #e67e22;
-        }
-        
         .search-container {
             margin-bottom: 15px;
             position: relative;
@@ -393,6 +406,11 @@
                 font-size: 14px;
             }
             
+            .sub-tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
             #qrcode {
                 min-height: 200px;
             }
@@ -433,11 +451,11 @@
                 font-size: 50px;
             }
             
-            .tab-container {
+            .tab-container, .sub-tab-container {
                 flex-direction: column;
             }
             
-            .tab {
+            .tab, .sub-tab {
                 margin-bottom: 5px;
                 border-radius: 8px;
             }
@@ -508,50 +526,59 @@
             </div>
             
             <div id="adminSection" class="admin-section hidden">
-                <button id="toggleFormBtn" class="toggle-form-btn">Mostrar Formulario de Registro</button>
-                
-                <div id="registerWorkerSection" class="section hidden">
-                    <h3>Registrar Nuevo Trabajador</h3>
-                    <input type="text" id="workerName" placeholder="Nombre del trabajador">
-                    <input type="text" id="workerId" placeholder="ID del trabajador">
-                    <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
-                    <button id="generateQRBtn">Generar código QR</button>
-                    <div id="qrcode">El código QR aparecerá aquí</div>
-                    <div id="registerStatus"></div>
+                <div class="sub-tab-container">
+                    <div class="sub-tab active" data-subtab="register">Registrar Trabajador</div>
+                    <div class="sub-tab" data-subtab="manage">Gestionar Trabajadores</div>
+                    <div class="sub-tab" data-subtab="attendance">Registros de Asistencia</div>
                 </div>
                 
-                <div class="section">
-                    <h3>Gestión de Trabajadores</h3>
-                    <button id="toggleListBtn" class="toggle-list-btn">Mostrar Lista de Trabajadores</button>
-                    
-                    <div id="workerListContainer" class="hidden">
+                <!-- Subpestaña: Registrar Trabajador -->
+                <div class="sub-tab-content active" id="registerSubTab">
+                    <div class="section">
+                        <h3>Registrar Nuevo Trabajador</h3>
+                        <input type="text" id="workerName" placeholder="Nombre del trabajador">
+                        <input type="text" id="workerId" placeholder="ID del trabajador">
+                        <input type="text" id="workerPosition" placeholder="Cargo del trabajador">
+                        <button id="generateQRBtn">Generar código QR</button>
+                        <div id="qrcode">El código QR aparecerá aquí</div>
+                        <div id="registerStatus"></div>
+                    </div>
+                </div>
+                
+                <!-- Subpestaña: Gestionar Trabajadores -->
+                <div class="sub-tab-content" id="manageSubTab">
+                    <div class="section">
+                        <h3>Gestión de Trabajadores</h3>
                         <div class="search-container">
                             <input type="text" id="searchWorker" placeholder="Buscar trabajador...">
                             <span class="search-icon">🔍</span>
                         </div>
                         <div id="workerList" class="worker-list"></div>
+                        <button id="refreshWorkersBtn">Actualizar lista</button>
                     </div>
-                    <button id="refreshWorkersBtn" class="secondary">Actualizar lista</button>
                 </div>
                 
-                <div class="section">
-                    <h3>Registros de Asistencia</h3>
-                    <button id="refreshAttendanceBtn">Actualizar registros</button>
-                    <div id="attendanceRecords">
-                        <table class="attendance-table">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>ID</th>
-                                    <th>Cargo</th>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendanceTableBody">
-                                <!-- Los registros se insertarán aquí -->
-                            </tbody>
-                        </table>
+                <!-- Subpestaña: Registros de Asistencia -->
+                <div class="sub-tab-content" id="attendanceSubTab">
+                    <div class="section">
+                        <h3>Registros de Asistencia</h3>
+                        <button id="refreshAttendanceBtn">Actualizar registros</button>
+                        <div id="attendanceRecords">
+                            <table class="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>ID</th>
+                                        <th>Cargo</th>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceTableBody">
+                                    <!-- Los registros se insertarán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -603,14 +630,12 @@
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         const adminLoginStatus = document.getElementById('adminLoginStatus');
         const workerList = document.getElementById('workerList');
-        const workerListContainer = document.getElementById('workerListContainer');
-        const toggleListBtn = document.getElementById('toggleListBtn');
         const searchWorkerInput = document.getElementById('searchWorker');
         const attendanceTableBody = document.getElementById('attendanceTableBody');
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
         const refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
-        const toggleFormBtn = document.getElementById('toggleFormBtn');
-        const registerWorkerSection = document.getElementById('registerWorkerSection');
+        const subTabs = document.querySelectorAll('.sub-tab');
+        const subTabContents = document.querySelectorAll('.sub-tab-content');
         
         // Inicializar
         function init() {
@@ -639,13 +664,19 @@
                 });
             });
             
+            // Event listeners para subpestañas
+            subTabs.forEach(subTab => {
+                subTab.addEventListener('click', () => {
+                    const subTabId = subTab.getAttribute('data-subtab');
+                    switchSubTab(subTabId);
+                });
+            });
+            
             generateQRBtn.addEventListener('click', generateQRCode);
             startScanBtn.addEventListener('click', startScanner);
             stopScanBtn.addEventListener('click', stopScanner);
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
-            toggleFormBtn.addEventListener('click', toggleRegisterForm);
-            toggleListBtn.addEventListener('click', toggleWorkerList);
             searchWorkerInput.addEventListener('input', filterWorkerList);
             
             // Cargar datos iniciales desde Google Sheets
@@ -674,10 +705,6 @@
             appScreen.classList.add('hidden');
             adminLoginSection.classList.remove('hidden');
             adminSection.classList.add('hidden');
-            registerWorkerSection.classList.add('hidden');
-            workerListContainer.classList.add('hidden');
-            toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
-            toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
             stopScanner();
         }
         
@@ -695,7 +722,7 @@
             }
         }
         
-        // Cambiar pestaña
+        // Cambiar pestaña principal
         function switchTab(tabId) {
             tabs.forEach(tab => {
                 if (tab.getAttribute('data-tab') === tabId) {
@@ -719,26 +746,23 @@
             }
         }
         
-        // Mostrar/ocultar formulario de registro
-        function toggleRegisterForm() {
-            if (registerWorkerSection.classList.contains('hidden')) {
-                registerWorkerSection.classList.remove('hidden');
-                toggleFormBtn.textContent = 'Ocultar Formulario de Registro';
-            } else {
-                registerWorkerSection.classList.add('hidden');
-                toggleFormBtn.textContent = 'Mostrar Formulario de Registro';
-            }
-        }
-        
-        // Mostrar/ocultar lista de trabajadores
-        function toggleWorkerList() {
-            if (workerListContainer.classList.contains('hidden')) {
-                workerListContainer.classList.remove('hidden');
-                toggleListBtn.textContent = 'Ocultar Lista de Trabajadores';
-            } else {
-                workerListContainer.classList.add('hidden');
-                toggleListBtn.textContent = 'Mostrar Lista de Trabajadores';
-            }
+        // Cambiar subpestaña
+        function switchSubTab(subTabId) {
+            subTabs.forEach(subTab => {
+                if (subTab.getAttribute('data-subtab') === subTabId) {
+                    subTab.classList.add('active');
+                } else {
+                    subTab.classList.remove('active');
+                }
+            });
+            
+            subTabContents.forEach(content => {
+                if (content.id === subTabId + 'SubTab') {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
         }
         
         // Filtrar lista de trabajadores
@@ -1307,12 +1331,6 @@
         // Eliminar trabajador
         function deleteWorker(id, name) {
             if (confirm(`¿Está seguro de que desea eliminar al trabajador ${name}?`)) {
-                const worker = workers.find(w => w.id === id);
-                if (!worker) {
-                    showStatus(workerList, 'Trabajador no encontrado', 'error');
-                    return;
-                }
-                
                 const formData = new FormData();
                 formData.append('action', 'delete');
                 formData.append('id', id);
