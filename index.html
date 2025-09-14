@@ -29,7 +29,7 @@
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
         }
         
         h1, h2, h3 {
@@ -156,27 +156,39 @@
             display: none;
         }
         
-        .worker-list {
+        .worker-table-container {
             margin-top: 20px;
             max-height: 400px;
             overflow-y: auto;
             border: 1px solid #eee;
             border-radius: 8px;
-            padding: 10px;
         }
         
-        .worker-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
+        .worker-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .worker-table th, .worker-table td {
+            padding: 12px 15px;
+            text-align: left;
             border-bottom: 1px solid #eee;
-            transition: background-color 0.3s;
-            flex-wrap: wrap;
         }
         
-        .worker-item:hover {
-            background-color: #f9f9f9;
+        .worker-table th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .worker-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .worker-table tr:hover {
+            background-color: #e9ecef;
         }
         
         .admin-section {
@@ -336,22 +348,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin: 5px;
+            margin: 2px;
+            font-size: 12px;
         }
         
         .download-btn:hover {
             background-color: #27ae60;
         }
         
-        .download-btn i {
-            margin-right: 5px;
-        }
-        
         .action-buttons {
             display: flex;
             flex-direction: column;
             gap: 5px;
-            min-width: 120px;
         }
         
         .search-container {
@@ -425,28 +433,23 @@
                 justify-content: center;
             }
             
-            .attendance-table {
+            .attendance-table, .worker-table {
                 font-size: 14px;
             }
             
-            .attendance-table th, .attendance-table td {
+            .attendance-table th, .attendance-table td,
+            .worker-table th, .worker-table td {
                 padding: 8px 10px;
             }
             
             .action-buttons {
                 flex-direction: row;
                 flex-wrap: wrap;
-                margin-top: 10px;
-                width: 100%;
             }
             
-            .action-buttons button {
-                width: 100%;
-            }
-            
-            .worker-item {
-                flex-direction: column;
-                align-items: flex-start;
+            .download-btn {
+                font-size: 11px;
+                padding: 6px 8px;
             }
         }
         
@@ -470,6 +473,18 @@
             .tab, .sub-tab {
                 margin-bottom: 5px;
                 border-radius: 8px;
+            }
+            
+            .worker-table {
+                font-size: 12px;
+            }
+            
+            .worker-table th, .worker-table td {
+                padding: 6px 8px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -551,7 +566,22 @@
                             <input type="text" id="searchWorker" placeholder="Buscar trabajador...">
                             <span class="search-icon">🔍</span>
                         </div>
-                        <div id="workerList" class="worker-list"></div>
+                        <div class="worker-table-container">
+                            <table class="worker-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>ID</th>
+                                        <th>Cargo</th>
+                                        <th>Fecha Registro</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="workerTableBody">
+                                    <!-- Los trabajadores se insertarán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
                         <button id="refreshWorkersBtn">Actualizar lista</button>
                     </div>
                 </div>
@@ -588,7 +618,7 @@
         const USERNAME = "admin";
         const PASSWORD = "admin123";
         const ADMIN_PASSWORD = "admin123";
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwg4XkRjnY_3St6Ssp11-OFrg_G4F0CwpkqSoXHTxmPawAc2EMbWCEjNkanU0L0iRmzaA/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhAvZb3qzU3pUgO5j54PDNN0VFztt7dfRU55fhcFjf6PyyudRoiXbZejgwsEhl8bEgDQ/exec";
         const QUICKCHART_URL = "https://quickchart.io/qr";
         
         // Variables globales
@@ -628,7 +658,7 @@
         const adminPasswordInput = document.getElementById('adminPassword');
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         const adminLoginStatus = document.getElementById('adminLoginStatus');
-        const workerList = document.getElementById('workerList');
+        const workerTableBody = document.getElementById('workerTableBody');
         const searchWorkerInput = document.getElementById('searchWorker');
         const attendanceTableBody = document.getElementById('attendanceTableBody');
         const refreshWorkersBtn = document.getElementById('refreshWorkersBtn');
@@ -654,6 +684,8 @@
             });
             
             logoutTab.addEventListener('click', logout);
+            
+            // Event listeners para pestañas principales
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     if (tab.id !== 'logoutTab') {
@@ -676,7 +708,7 @@
             stopScanBtn.addEventListener('click', stopScanner);
             refreshWorkersBtn.addEventListener('click', fetchWorkersFromGoogleSheets);
             refreshAttendanceBtn.addEventListener('click', fetchAttendanceFromGoogleSheets);
-            searchWorkerInput.addEventListener('input', filterWorkerList);
+            searchWorkerInput.addEventListener('input', filterWorkerTable);
             
             // Cargar datos iniciales desde Google Sheets
             fetchWorkersFromGoogleSheets();
@@ -691,6 +723,9 @@
                 appScreen.classList.remove('hidden');
                 usernameInput.value = "";
                 passwordInput.value = "";
+                // Actualizar datos al iniciar sesión
+                fetchWorkersFromGoogleSheets();
+                fetchAttendanceFromGoogleSheets();
             } else {
                 showStatus(loginStatus, 'Usuario o contraseña incorrectos', 'error');
             }
@@ -714,7 +749,7 @@
                 adminLoginSection.classList.add('hidden');
                 adminSection.classList.remove('hidden');
                 adminPasswordInput.value = "";
-                updateWorkerList();
+                updateWorkerTable();
                 updateAttendanceTable();
             } else {
                 showStatus(adminLoginStatus, 'Contraseña de administrador incorrecta', 'error');
@@ -734,6 +769,10 @@
             tabContents.forEach(content => {
                 if (content.id === tabId + 'Tab') {
                     content.classList.add('active');
+                    // Actualizar datos al cambiar de pestaña
+                    if (tabId === 'attendance') {
+                        fetchWorkersFromGoogleSheets();
+                    }
                 } else {
                     content.classList.remove('active');
                 }
@@ -758,25 +797,32 @@
             subTabContents.forEach(content => {
                 if (content.id === subTabId + 'SubTab') {
                     content.classList.add('active');
+                    // Actualizar datos al cambiar de subpestaña
+                    if (subTabId === 'manage') {
+                        fetchWorkersFromGoogleSheets();
+                    } else if (subTabId === 'attendance') {
+                        fetchAttendanceFromGoogleSheets();
+                    }
                 } else {
                     content.classList.remove('active');
                 }
             });
         }
         
-        // Filtrar lista de trabajadores
-        function filterWorkerList() {
+        // Filtrar tabla de trabajadores
+        function filterWorkerTable() {
             const searchTerm = searchWorkerInput.value.toLowerCase();
-            const workerItems = workerList.querySelectorAll('.worker-item');
+            const workerRows = workerTableBody.querySelectorAll('tr');
             
-            workerItems.forEach(item => {
-                const workerName = item.querySelector('strong').textContent.toLowerCase();
-                const workerId = item.querySelector('div').textContent.toLowerCase();
+            workerRows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const id = row.cells[1].textContent.toLowerCase();
+                const position = row.cells[2].textContent.toLowerCase();
                 
-                if (workerName.includes(searchTerm) || workerId.includes(searchTerm)) {
-                    item.style.display = 'flex';
+                if (name.includes(searchTerm) || id.includes(searchTerm) || position.includes(searchTerm)) {
+                    row.style.display = '';
                 } else {
-                    item.style.display = 'none';
+                    row.style.display = 'none';
                 }
             });
         }
@@ -911,7 +957,7 @@
             .then(data => {
                 if (data.result === 'success' && data.workers) {
                     workers = data.workers;
-                    updateWorkerList();
+                    updateWorkerTable();
                 } else {
                     console.error('Error al obtener trabajadores:', data.message);
                 }
@@ -952,6 +998,9 @@
         
         // Iniciar escáner
         function startScanner() {
+            // Actualizar trabajadores antes de escanear
+            fetchWorkersFromGoogleSheets();
+            
             setLoading(startScanBtn, true);
             
             scannerContainer.style.display = 'block';
@@ -1168,18 +1217,17 @@
             });
         }
         
-        // Actualizar lista de trabajadores
-        function updateWorkerList() {
-            workerList.innerHTML = "";
+        // Actualizar tabla de trabajadores
+        function updateWorkerTable() {
+            workerTableBody.innerHTML = "";
             
             if (workers.length === 0) {
-                workerList.innerHTML = "<p>No hay trabajadores registrados</p>";
+                workerTableBody.innerHTML = "<tr><td colspan='5' style='text-align: center;'>No hay trabajadores registrados</td></tr>";
                 return;
             }
             
             workers.forEach((worker, index) => {
-                const workerItem = document.createElement('div');
-                workerItem.className = 'worker-item';
+                const row = document.createElement('tr');
                 
                 // Formatear fecha de registro
                 let registeredDate = 'Fecha desconocida';
@@ -1199,22 +1247,23 @@
                     }
                 }
                 
-                workerItem.innerHTML = `
-                    <div>
-                        <strong>${worker.name}</strong> 
-                        <div>ID: ${worker.id} - ${worker.position}</div>
-                        <small>Registrado: ${registeredDate}</small>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="download-btn" data-id="${worker.id}" data-name="${worker.name}" data-position="${worker.position}">Descargar QR</button>
-                        <button class="danger" data-id="${worker.id}" data-name="${worker.name}">Eliminar</button>
-                    </div>
+                row.innerHTML = `
+                    <td>${worker.name}</td>
+                    <td>${worker.id}</td>
+                    <td>${worker.position}</td>
+                    <td>${registeredDate}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="download-btn" data-id="${worker.id}" data-name="${worker.name}" data-position="${worker.position}">Descargar QR</button>
+                            <button class="danger" data-id="${worker.id}" data-name="${worker.name}">Eliminar</button>
+                        </div>
+                    </td>
                 `;
-                workerList.appendChild(workerItem);
+                workerTableBody.appendChild(row);
             });
             
             // Agregar event listeners a los botones
-            const downloadButtons = workerList.querySelectorAll('.download-btn');
+            const downloadButtons = workerTableBody.querySelectorAll('.download-btn');
             downloadButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
@@ -1224,7 +1273,7 @@
                 });
             });
             
-            const deleteButtons = workerList.querySelectorAll('.danger');
+            const deleteButtons = workerTableBody.querySelectorAll('.danger');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
@@ -1256,11 +1305,11 @@
                     })
                     .catch(error => {
                         console.error("Error al descargar QR:", error);
-                        showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                        showStatus(workerTableBody, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
                     });
             } catch (error) {
                 console.error("Error al descargar QR:", error);
-                showStatus(workerList, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
+                showStatus(workerTableBody, 'Error al descargar el QR. Intente actualizar la lista.', 'error');
             }
         }
         
@@ -1330,29 +1379,39 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.result === 'success') {
-                        showStatus(workerList, 'Trabajador eliminado correctamente', 'success');
+                        showStatus(workerTableBody, 'Trabajador eliminado correctamente', 'success');
                         // Actualizar la lista de trabajadores
                         setTimeout(() => {
                             fetchWorkersFromGoogleSheets();
                         }, 1000);
                     } else {
-                        showStatus(workerList, 'Error al eliminar trabajador: ' + data.message, 'error');
+                        showStatus(workerTableBody, 'Error al eliminar trabajador: ' + data.message, 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showStatus(workerList, 'Error de conexión con Google Sheets', 'error');
+                    showStatus(workerTableBody, 'Error de conexión con Google Sheets', 'error');
                 });
             }
         }
         
         // Mostrar mensaje de estado
         function showStatus(element, message, type) {
-            element.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            // Crear un contenedor para el mensaje si no existe
+            let statusContainer = element.parentNode.querySelector('.status-message');
+            if (!statusContainer) {
+                statusContainer = document.createElement('div');
+                statusContainer.className = 'status-message';
+                element.parentNode.insertBefore(statusContainer, element);
+            }
+            
+            statusContainer.className = `status-message ${type}`;
+            statusContainer.innerHTML = message;
             
             // Limpiar mensaje después de 5 segundos
             setTimeout(() => {
-                element.innerHTML = '';
+                statusContainer.innerHTML = '';
+                statusContainer.className = 'status-message';
             }, 5000);
         }
         
@@ -1361,9 +1420,20 @@
             if (isLoading) {
                 button.classList.add('loading');
                 button.disabled = true;
+                button.innerHTML = ''; // Limpiar texto
             } else {
                 button.classList.remove('loading');
                 button.disabled = false;
+                // Restaurar texto según el botón
+                if (button.id === 'generateQRBtn') {
+                    button.innerHTML = 'Generar código QR';
+                } else if (button.id === 'refreshWorkersBtn') {
+                    button.innerHTML = 'Actualizar lista';
+                } else if (button.id === 'refreshAttendanceBtn') {
+                    button.innerHTML = 'Actualizar registros';
+                } else if (button.id === 'startScanBtn') {
+                    button.innerHTML = 'Abrir cámara para escanear QR';
+                }
             }
         }
         
@@ -1372,4 +1442,3 @@
     </script>
 </body>
 </html>
-
